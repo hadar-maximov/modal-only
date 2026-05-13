@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bizzy">
+<meta name="theme-color" content="#ffffff">
+<title>Bizzy · Web Summit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --accent:      #F30C5F;
+  --accent-soft: rgba(243,12,95,.09);
+  --accent-mid:  rgba(243,12,95,.22);
+  --yellow:      #F5E000;
+  --surface:     #FFFFFF;
+  --sf2:         #F7F5F1;
+  --border:      #ECEAE3;
+  --bsoft:       #F1EFE8;
+  --t1: #1A1915; --t2: #57554E; --t3: #8F8C84; --t4: #B5B2A8;
+  --font: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  /* safe-area insets */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  color: var(--t1);
+  background: var(--sf2);
+  height: 100%;
+  /* Full screen app layout */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Prevent pull-to-refresh bounce */
+  overscroll-behavior: none;
+}
+
+/* ── APP SHELL ── */
+/* Fixed header — app bar stays pinned at top */
+.app-header {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--bsoft);
+  /* Push content below status bar on iOS */
+  padding-top: max(var(--sat), 12px);
+  position: relative;
+  z-index: 20;
+}
+
+/* Scrollable content fills the middle */
+.app-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  display: flex;
+  flex-direction: column;
+}
+.app-body::-webkit-scrollbar { display: none; }
+
+/* Fixed footer — composer + tabs stay pinned at bottom */
+.app-footer {
+  flex-shrink: 0;
+  background: rgba(255,255,255,.97);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-top: 1px solid var(--bsoft);
+  /* Push content above home indicator on iOS */
+  padding-bottom: max(var(--sab), 0px);
+}
+
+/* ── APP BAR ── */
+.abar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 12px;
+}
+.abar-l { display: flex; align-items: center; gap: 10px; }
+.logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--yellow);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.evname { font-size: 13px; font-weight: 700; color: var(--t1); line-height: 1.2; letter-spacing: -.2px; }
+.evdate { font-size: 10.5px; font-weight: 500; color: var(--t3); }
+.abar-r { display: flex; gap: 4px; align-items: center; }
+.ibtn {
+  width: 36px; height: 36px; border-radius: 50%; border: 0;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--t1); position: relative; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ibtn:active { background: var(--sf2); }
+.bell::after {
+  content: ''; position: absolute; top: 7px; right: 7px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #FFF;
+}
+.ava {
+  width: 32px; height: 32px; border-radius: 50%;
+  overflow: hidden; cursor: pointer; flex-shrink: 0;
+}
+.ava img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+
+/* ── ANCHOR CARD ── */
+.anchor-wrap {
+  background: var(--surface);
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--bsoft);
+}
+.acard {
+  border-radius: 20px; padding: 13px 15px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  cursor: pointer; transition: opacity .15s; position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.acard::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.acard:active { opacity: .88; }
+.acard.live { background: linear-gradient(135deg, #0B4FB8, #128EF3); }
+.aicon {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: rgba(255,255,255,.14);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.abody { flex: 1; min-width: 0; }
+.alabel {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 1.3px;
+  text-transform: uppercase; color: rgba(255,255,255,.45);
+  margin-bottom: 2px; font-family: var(--font-mono);
+}
+.amain { font-size: 14px; font-weight: 700; letter-spacing: -.3px; line-height: 1.25; color: #FFF; }
+.asub { font-size: 11px; font-weight: 500; color: rgba(255,255,255,.55); margin-top: 2px; }
+.acta {
+  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.25);
+  color: #FFF; font-family: var(--font); font-size: 11.5px; font-weight: 700;
+  padding: 8px 13px; border-radius: 9px; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.acta:active { background: rgba(255,255,255,.32); }
+
+/* ── EVENT BANNER ── */
+.event-banner { position: relative; height: 100px; overflow: hidden; flex-shrink: 0; }
+.event-banner-bg { position: absolute; inset: 0; }
+.event-banner-pattern {
+  position: absolute; inset: 0; opacity: .18;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.15) 0, rgba(255,255,255,.15) 1px, transparent 0, transparent 50%);
+  background-size: 20px 20px;
+}
+.event-banner-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(0deg, rgba(10,20,40,.72) 0%, rgba(10,20,40,.2) 60%, transparent 100%);
+}
+.event-banner-text { position: absolute; bottom: 11px; left: 16px; right: 16px; }
+.eb-eyebrow {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.4px;
+  text-transform: uppercase; color: rgba(255,255,255,.65);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 3px;
+}
+.eb-title {
+  font-family: var(--font-display); font-size: 18px; font-weight: 600;
+  color: #FFF; line-height: 1.1; letter-spacing: -.3px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #19C37D;
+  animation: lp 1.6s infinite;
+}
+@keyframes lp {
+  0%   { box-shadow: 0 0 0 0 rgba(25,195,125,.55); }
+  70%  { box-shadow: 0 0 0 6px rgba(25,195,125,0); }
+  100% { box-shadow: 0 0 0 0 rgba(25,195,125,0); }
+}
+
+/* ── BIZZY DIVIDER ── */
+.bdiv { display: flex; align-items: center; gap: 10px; padding: 12px 16px 8px; flex-shrink: 0; }
+.bline { flex: 1; height: 1px; background: var(--border); }
+.bbadge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 5px 10px 5px 8px;
+  font-size: 11px; font-weight: 700; color: var(--t2);
+}
+.bglyph {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.ldot { width: 6px; height: 6px; border-radius: 50%; background: #19C37D; display: inline-block; animation: lp 1.6s infinite; }
+.rbtn {
+  width: 28px; height: 28px; border-radius: 50%; border: 0;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--t3); transition: background .15s, color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.rbtn:active { background: var(--sf2); color: var(--t1); }
+
+/* ── SUGGEST CHIPS ── */
+.suggest-area { padding: 0 16px 8px; }
+.suggest-label {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--t3); font-family: var(--font-mono);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+}
+.suggest-list { display: flex; flex-direction: column; gap: 6px; }
+.suggest-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 11px 16px;
+  font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--t1);
+  cursor: pointer; text-align: left; white-space: nowrap;
+  transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.suggest-chip:active { background: var(--accent-soft); border-color: var(--accent-mid); color: var(--accent); }
+.s-icon { color: var(--accent); display: inline-flex; flex-shrink: 0; }
+
+/* ── HOME BODY SECTIONS ── */
+.home-section { padding: 0 16px 16px; }
+.home-section-title {
+  font-family: var(--font-display); font-size: 17px; font-weight: 600;
+  letter-spacing: -.3px; margin-bottom: 10px; color: var(--t1);
+}
+.page-section { padding: 12px 16px 8px; }
+.page-section-title {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--t3); font-family: var(--font-mono); margin-bottom: 10px;
+}
+
+/* ── COMPOSER (inside footer) ── */
+.composer { padding: 10px 14px 10px; }
+.crow {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--sf2); border-radius: 999px;
+  padding: 6px 6px 6px 16px;
+  border: 1px solid var(--border);
+}
+.crow input {
+  flex: 1; background: transparent; border: 0;
+  font-family: var(--font); font-size: 15px; color: var(--t1);
+  padding: 8px 0; outline: none;
+  /* Prevent iOS zoom on focus */
+  font-size: 16px;
+}
+.crow input::placeholder { color: var(--t3); }
+.sbtn {
+  width: 38px; height: 38px; border-radius: 50%; border: 0;
+  background: var(--t1); color: #FFF; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.sbtn:active { background: #000; }
+
+/* ── TAB BAR (inside footer) ── */
+.tabbar {
+  display: flex; justify-content: space-around;
+  padding: 4px 8px 0;
+}
+.tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 14px 8px; border: 0; background: transparent;
+  cursor: pointer; color: var(--t3); font-size: 10px; font-weight: 600;
+  font-family: var(--font); flex: 1; transition: color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab:active, .tab.on { color: var(--t1); }
+.tab svg { width: 22px; height: 22px; }
+
+/* ── BIZZY CARDS ── */
+.bzc {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px;
+  cursor: pointer; transition: border-color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bzc:active { border-color: var(--accent-mid); }
+.bzc-ph { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--sf2); }
+.bzc-ph img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.bzc-body { flex: 1; min-width: 0; }
+.bzc-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -.2px; color: var(--t1); line-height: 1.2; }
+.bzc-role { font-size: 12px; color: var(--t2); margin-top: 2px; line-height: 1.35; }
+.bzc-meta { font-size: 11.5px; color: var(--t3); margin-top: 4px; display: flex; align-items: center; gap: 5px; line-height: 1.3; }
+.bzc-hint { font-size: 11.5px; color: var(--t2); margin-top: 5px; font-style: italic; line-height: 1.35; }
+.bzc-muts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.bzc-mut { font-size: 10.5px; background: var(--accent-soft); color: var(--accent); padding: 2px 7px; border-radius: 999px; font-weight: 600; }
+.bzc-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bzc-btn {
+  font-family: var(--font); font-size: 12px; font-weight: 700;
+  padding: 7px 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--t1); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: background .15s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.bzc-btn:active { background: var(--sf2); }
+.bzc-btn-primary { background: var(--t1); color: #FFF; border-color: var(--t1); }
+.bzc-btn-primary:active { background: #000; }
+.bzc-btn-soft { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.bzc-btn-soft:active { background: var(--accent-mid); }
+.bzc-tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; font-weight: 600; margin-bottom: 4px; }
+.bzc-tag-live { background: rgba(220,38,38,.10); color: #B91C1C; }
+.bzc-tag-next { background: rgba(243,12,95,.10); color: var(--accent); }
+.bzc-dot { width: 5px; height: 5px; border-radius: 50%; background: #DC2626; animation: bpulse 1.4s infinite; }
+@keyframes bpulse { 0%{box-shadow:0 0 0 0 rgba(220,38,38,.6);}70%{box-shadow:0 0 0 5px rgba(220,38,38,0);}100%{box-shadow:0 0 0 0 rgba(220,38,38,0);} }
+.bzc-session .bzc-time { width: 44px; flex-shrink: 0; text-align: center; background: var(--sf2); border-radius: 10px; padding: 7px 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.bzc-time-num { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1; color: var(--t1); }
+.bzc-time-min { font-family: var(--font-mono); font-size: 10px; color: var(--t3); margin-top: 2px; letter-spacing: .5px; }
+.bzc-map { width: 52px; height: 52px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+.bzc-map svg { width: 100%; height: 100%; display: block; }
+.bzc-wifi { align-items: center; }
+.bzc-wifi-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.bzc-wifi-row { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 1.5; }
+.bzc-wifi-lbl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--t3); width: 62px; flex-shrink: 0; }
+.bzc-wifi-val { font-family: var(--font-mono); font-weight: 500; color: var(--t1); }
+.bzc-logo { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg,var(--t1),#444); color: #FFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; flex-shrink: 0; }
+.bzc-schedule { flex-direction: column; gap: 0; padding: 4px 12px; }
+.bzc-sch-row { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+.bzc-sch-row:last-child { border-bottom: 0; }
+.bzc-sch-time { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--t1); width: 42px; flex-shrink: 0; }
+.bzc-sch-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.bzc-sch-meta { font-size: 11.5px; color: var(--t3); margin-top: 2px; }
+.spk-card { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.spk-card:active { opacity: .92; }
+.spk-card-img { height: 120px; overflow: hidden; position: relative; }
+.spk-card-av { position: absolute; bottom: -20px; left: 14px; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; border: 3px solid #FFF; box-shadow: 0 2px 8px rgba(0,0,0,.14); }
+.spk-card-av img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.spk-card-body { padding: 26px 14px 12px; background: var(--surface); }
+.spk-card-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--t1); }
+.spk-card-role { font-size: 12px; color: var(--t2); margin-top: 1px; }
+.spk-card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.spk-card-session { font-size: 11px; color: var(--t3); display: flex; align-items: center; gap: 4px; }
+
+/* ── MODAL ── */
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4); opacity: 0; pointer-events: none;
+  transition: opacity .22s; z-index: 60;
+}
+.scrim.open { opacity: 1; pointer-events: auto; }
+.modal {
+  position: fixed; left: 12px; right: 12px;
+  bottom: max(var(--sab), 10px);
+  max-height: 80vh;
+  background: var(--surface); border-radius: 28px;
+  z-index: 70; transform: translateY(120%);
+  transition: transform .32s cubic-bezier(.2,.7,.2,1);
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.04);
+}
+.modal.open { transform: translateY(0); }
+.modal-grip { width: 36px; height: 4px; background: var(--t4); border-radius: 999px; margin: 10px auto 4px; flex-shrink: 0; }
+.modal-head { display: flex; align-items: center; gap: 8px; padding: 4px 16px 10px; flex-shrink: 0; }
+.modal-q-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--sf2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 600; color: var(--t2); max-width: 76%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.modal-q-chip .qi { color: var(--accent); flex-shrink: 0; }
+.modal-close { margin-left: auto; width: 28px; height: 28px; border: 0; background: var(--sf2); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--t2); flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.modal-close:active { background: var(--border); }
+.modal-body { overflow-y: auto; padding: 0 18px 4px; flex: 1; -webkit-overflow-scrolling: touch; }
+.modal-body::-webkit-scrollbar { display: none; }
+.morph { animation: morphIn .32s cubic-bezier(.2,.7,.2,1); }
+@keyframes morphIn { from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:none;} }
+.m-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.08; letter-spacing: -.6px; margin: 4px 0 8px; color: var(--t1); }
+.m-title em { font-style: italic; }
+.m-text { font-size: 14px; color: var(--t2); line-height: 1.55; margin-bottom: 14px; }
+.m-cards { margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.fu-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--t3); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.fu-chips { display: flex; flex-direction: column; gap: 6px; padding-bottom: 18px; }
+.fu-chip { display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; font-size: 13px; font-weight: 600; color: var(--t1); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fu-chip:active { border-color: var(--accent-mid); background: var(--accent-soft); color: var(--accent); }
+.fu-chip .fi { color: var(--accent); flex-shrink: 0; }
+.fu-chip .fa { margin-left: auto; color: var(--t4); }
+.yesno { display: flex; gap: 8px; padding-bottom: 16px; }
+.yesno button { flex: 1; padding: 14px 16px; border-radius: 14px; font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; border: 0; -webkit-tap-highlight-color: transparent; }
+.yesno .yes { background: var(--t1); color: #FFF; }
+.yesno .yes:active { background: #000; }
+.yesno .no { background: var(--sf2); color: var(--t1); border: 1px solid var(--border) !important; }
+.yesno .no:active { background: var(--border); }
+.typing { padding: 28px 0; display: flex; justify-content: center; }
+.typing-dots { display: inline-flex; gap: 5px; }
+.typing-dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--t3); animation: td 1.2s infinite; }
+.typing-dots span:nth-child(2) { animation-delay: .15s; }
+.typing-dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes td { 0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-4px);opacity:1;} }
+.propose-card { background: var(--sf2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+.propose-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--t3); font-family: var(--font-mono); margin-bottom: 6px; }
+.propose-detail { font-size: 13.5px; font-weight: 600; color: var(--t1); line-height: 1.35; margin-bottom: 12px; }
+.propose-actions { display: flex; gap: 8px; }
+.propose-actions button { flex: 1; padding: 12px; border-radius: 11px; font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; border: 0; -webkit-tap-highlight-color: transparent; }
+.propose-confirm { background: var(--accent); color: #FFF; }
+.propose-confirm:active { background: #d40a55; }
+.propose-dismiss { background: var(--surface); color: var(--t1); border: 1px solid var(--border) !important; }
+.propose-dismiss:active { background: var(--border); }
+.emergency-card { background: rgba(220,38,38,.06); border: 1px solid rgba(220,38,38,.22); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+.emergency-card .ec-title { font-size: 14px; font-weight: 700; color: #B91C1C; margin-bottom: 4px; display: flex; align-items: center; gap: 7px; }
+.emergency-card .ec-body { font-size: 13px; color: #991B1B; line-height: 1.5; }
+
+/* ── DETAIL PAGE ── */
+.detail-page {
+  position: fixed; inset: 0;
+  background: var(--surface); z-index: 80;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .32s cubic-bezier(.32,.72,0,1);
+}
+.detail-page.open { transform: translateX(0); }
+.detail-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: max(var(--sat), 52px) 16px 10px;
+  background: var(--surface); border-bottom: 1px solid var(--bsoft);
+  flex-shrink: 0;
+}
+.detail-back {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--t1); -webkit-tap-highlight-color: transparent;
+}
+.detail-back:active { background: var(--sf2); }
+.detail-nav-title { font-size: 13px; font-weight: 700; color: var(--t2); text-align: center; flex: 1; }
+.detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.detail-scroll::-webkit-scrollbar { display: none; }
+.d-banner { height: 180px; position: relative; overflow: hidden; flex-shrink: 0; }
+.d-banner-bg { position: absolute; inset: 0; }
+.d-banner-pattern { position: absolute; inset: 0; opacity: .15; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.2) 0, rgba(255,255,255,.2) 1px, transparent 0, transparent 50%); background-size: 18px 18px; }
+.d-banner-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10,10,10,.55) 0%, transparent 55%); }
+.d-banner-av { position: absolute; bottom: -28px; left: 20px; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; border: 4px solid #FFF; box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+.d-banner-av img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.d-session-banner { padding: 20px 20px 18px; flex-shrink: 0; color: #FFF; }
+.d-session-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 4px; }
+.d-session-time-big { font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -2px; line-height: 1; color: #FFF; }
+.d-session-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: #FFF; letter-spacing: -.3px; line-height: 1.15; margin-top: 5px; }
+.d-session-room { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+.d-body { padding: 48px 20px 20px; }
+.d-body.no-offset { padding-top: 20px; }
+.d-name { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -.5px; color: var(--t1); line-height: 1.05; }
+.d-role { font-size: 14px; color: var(--t2); margin-top: 4px; line-height: 1.35; }
+.d-muts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.d-mut { font-size: 11px; font-weight: 600; background: var(--accent-soft); color: var(--accent); padding: 3px 9px; border-radius: 999px; }
+.d-bio { font-size: 13.5px; color: var(--t2); line-height: 1.6; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--bsoft); }
+.d-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--bsoft); }
+.d-section-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--t3); margin-bottom: 10px; }
+.d-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--bsoft); }
+.d-row:last-child { border-bottom: 0; }
+.d-row-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--sf2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--t3); }
+.d-row-lbl { font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--t3); margin-bottom: 1px; }
+.d-row-val { font-size: 13.5px; font-weight: 600; color: var(--t1); }
+.d-stats { display: flex; gap: 8px; margin-top: 14px; }
+.d-stat { flex: 1; background: var(--sf2); border-radius: 12px; padding: 12px 10px; text-align: center; }
+.d-stat-val { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -1px; color: var(--t1); line-height: 1; }
+.d-stat-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--t3); margin-top: 3px; }
+.d-person-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bsoft); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.d-person-row:last-child { border-bottom: 0; }
+.d-person-row:active { opacity: .7; }
+.d-person-ph { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.d-person-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.d-person-name { font-size: 14px; font-weight: 700; color: var(--t1); letter-spacing: -.2px; }
+.d-person-role { font-size: 11.5px; color: var(--t2); margin-top: 1px; }
+.detail-cta-bar {
+  flex-shrink: 0;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--bsoft);
+  padding: 10px 18px max(calc(var(--sab) + 10px), 20px);
+  display: flex; gap: 8px;
+}
+.detail-cta-bar.hidden { display: none; }
+.dcta-btn {
+  flex: 1; font-family: var(--font); font-size: 14px; font-weight: 700;
+  padding: 14px; border-radius: 13px; border: 0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.dcta-btn:active { opacity: .85; }
+.dcta-primary { background: var(--t1); color: #FFF; }
+.dcta-secondary { background: var(--sf2); color: var(--t1); }
+.dcta-accent { background: var(--accent); color: #FFF; }
+
+/* ── BOTTOM SPACER (content doesn't hide behind fixed footer) ── */
+.scroll-spacer { height: 12px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══ FIXED HEADER ═══ -->
+<div class="app-header">
+  <div class="abar">
+    <div class="abar-l">
+      <div class="logo">
+        <svg viewBox="0 0 22 22" fill="none" width="20" height="20">
+          <path d="M6 4C6 4 4 6.5 4 11C4 15.5 6 18 6 18" stroke="#1A1915" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M10 7C10 7 8.5 8.8 8.5 11C8.5 13.2 10 15 10 15" stroke="#1A1915" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M14 4C14 4 16 6.5 16 11C16 15.5 14 18 14 18" stroke="#1A1915" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="evname">Web Summit</div>
+        <div class="evdate">May 12&#8211;15 &#183; Expo Tel Aviv</div>
+      </div>
+    </div>
+    <div class="abar-r">
+      <button class="ibtn bell" aria-label="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <div class="ava" id="user-ava"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCROLLABLE CONTENT ═══ -->
+<div class="app-body" id="cs">
+
+  <!-- Anchor card -->
+  <div class="anchor-wrap" id="anchor-wrap">
+    <div class="acard live" id="acard" data-prompt="What's on right now?">
+      <div class="aicon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="abody">
+        <div class="alabel" id="a-label">UP NEXT</div>
+        <div class="amain" id="a-main">AI in Product Design</div>
+        <div class="asub" id="a-sub">14:30 &#183; Hall B &#183; Daniel Wu</div>
+      </div>
+      <button class="acta" id="a-cta">Directions</button>
+    </div>
+  </div>
+
+  <!-- Event banner -->
+  <div class="event-banner" id="event-banner">
+    <div class="event-banner-bg" style="background:linear-gradient(135deg,#0C2340,#0B4FB8);"></div>
+    <div class="event-banner-pattern"></div>
+    <div id="banner-avatars" style="position:absolute;bottom:10px;right:14px;display:flex;z-index:2;"></div>
+    <div class="event-banner-overlay"></div>
+    <div class="event-banner-text">
+      <div class="eb-eyebrow" id="eb-eyebrow"><span class="live-dot"></span>HAPPENING NOW</div>
+      <div class="eb-title" id="eb-title">Web Summit &#183; Day 2</div>
+    </div>
+  </div>
+
+  <!-- Bizzy divider -->
+  <div class="bdiv">
+    <div class="bline"></div>
+    <div class="bbadge">
+      <div class="bglyph">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>
+      </div>
+      <span class="ldot"></span>
+      Bizzy
+    </div>
+    <div class="bline"></div>
+    <button class="rbtn" id="reset-btn" aria-label="Reset">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+    </button>
+  </div>
+
+  <!-- Suggest chips -->
+  <div class="suggest-area" id="suggest-area">
+    <div class="suggest-label">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>
+      Ask Bizzy
+    </div>
+    <div class="suggest-list" id="suggest-list"></div>
+  </div>
+
+  <!-- Home / page body -->
+  <div id="home-body"></div>
+  <div id="page-content"></div>
+  <div class="scroll-spacer"></div>
+</div>
+
+<!-- ═══ FIXED FOOTER ═══ -->
+<div class="app-footer">
+  <div class="composer">
+    <div class="crow">
+      <input type="text" id="chat-input" placeholder="Ask Bizzy anything&#8230;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button class="sbtn" id="send-btn" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="tabbar" id="tab-bar"></div>
+</div>
+
+<!-- ═══ OVERLAYS (fixed, full-screen) ═══ -->
+<div class="detail-page" id="detail-page">
+  <div class="detail-nav">
+    <button class="detail-back" id="detail-back" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="detail-nav-title" id="detail-nav-title"></span>
+    <div style="width:36px;"></div>
+  </div>
+  <div class="detail-scroll" id="detail-scroll"></div>
+  <div class="detail-cta-bar hidden" id="detail-cta-bar"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="modal" id="modal">
+  <div class="modal-grip"></div>
+  <div class="modal-head">
+    <div class="modal-q-chip">
+      <svg class="qi" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>
+      <span id="modal-q-text">&#8212;</span>
+    </div>
+    <button class="modal-close" id="modal-close" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-body" id="modal-body"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* === AVATAR SYSTEM ========================================================== */
+var _avc = {};
+function makeAv(seed) {
+  if (_avc[seed]) return _avc[seed];
+  var pal = [
+    ['#F8D5B0','#8B4513','#1A4D8F',0,'#E8F0F8'],
+    ['#F0C8A0','#5C2D0A','#D97706',1,'#FFF5E6'],
+    ['#DDA882','#2C1810','#0F7A52',0,'#E8F5EE'],
+    ['#C8956C','#1A1915','#7C3AED',1,'#F0EBFD'],
+    ['#E8B88C','#4A2810','#DC2626',0,'#FDE8E8'],
+    ['#F5D5B0','#6B3A1F','#374151',1,'#F0F0F0'],
+    ['#EAC595','#3D1F0E','#0891B2',0,'#E0F4F8'],
+    ['#D4A882','#1A1915','#166534',1,'#E8F5EE'],
+    ['#F2C9A0','#7A3B10','#5B3DF5',0,'#EEEAFE'],
+    ['#E0B090','#4A2010','#B91C1C',1,'#FDE8E8']
+  ];
+  var p = pal[seed % pal.length];
+  var sk=p[0],hr=p[1],sh=p[2],wavy=p[3],bg=p[4];
+  var hairTop = wavy
+    ? '<path d="M32 46 Q46 24 60 30 Q74 24 88 46 Q92 58 88 70 Q74 44 60 42 Q46 44 32 70 Q28 58 32 46Z" fill="'+hr+'"/>'
+    : '<ellipse cx="60" cy="36" rx="30" ry="26" fill="'+hr+'"/><rect x="30" y="42" width="60" height="12" fill="'+hr+'"/>';
+  var ears = '<ellipse cx="30" cy="62" rx="7" ry="9" fill="'+sk+'"/><ellipse cx="90" cy="62" rx="7" ry="9" fill="'+sk+'"/>';
+  var body = '<ellipse cx="60" cy="136" rx="55" ry="36" fill="'+sh+'"/>';
+  var neck = '<rect x="52" y="78" width="16" height="24" rx="6" fill="'+sk+'"/>';
+  var face = '<ellipse cx="60" cy="56" rx="26" ry="28" fill="'+sk+'"/>';
+  var eyes = '<ellipse cx="50" cy="54" rx="6" ry="5" fill="white"/><ellipse cx="70" cy="54" rx="6" ry="5" fill="white"/>'
+           + '<circle cx="50" cy="54" r="3.5" fill="#2D1A0E"/><circle cx="70" cy="54" r="3.5" fill="#2D1A0E"/>'
+           + '<circle cx="49" cy="52.5" r="1.4" fill="white" opacity=".9"/><circle cx="69" cy="52.5" r="1.4" fill="white" opacity=".9"/>';
+  var brows = '<path d="M45 47 Q50 44 55 46" stroke="'+hr+'" stroke-width="2" fill="none" stroke-linecap="round"/>'
+            + '<path d="M65 46 Q70 44 75 47" stroke="'+hr+'" stroke-width="2" fill="none" stroke-linecap="round"/>';
+  var nose = '<ellipse cx="60" cy="65" rx="4" ry="3" fill="rgba(0,0,0,.1)"/>';
+  var mouth = '<path d="M52 75 Q60 80 68 75" stroke="#A05060" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  var inner = '<rect width="120" height="120" fill="'+bg+'"/>'
+    + ears + body + hairTop + face + brows + eyes + nose + mouth + neck;
+  var svgStr = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">'
+    + '<defs><clipPath id="cp'+seed+'"><circle cx="60" cy="60" r="60"/></clipPath></defs>'
+    + '<g clip-path="url(#cp'+seed+')">' + inner + '</g></svg>';
+  _avc[seed] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+  return _avc[seed];
+}
+function avImg(seed, sz) {
+  var s = sz || 44;
+  return '<img src="'+makeAv(seed)+'" alt="" width="'+s+'" height="'+s+'" style="width:'+s+'px;height:'+s+'px;border-radius:50%;display:block;">';
+}
+document.getElementById('user-ava').innerHTML = avImg(7, 32);
+
+/* === ICONS ================================================================== */
+var I = {
+  spark: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>',
+  arrow: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  pin:   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  clock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  plus:  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  wifi:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
+  copy:  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  msg:   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  home:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>',
+  cal:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  mic:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>',
+  more:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'
+};
+
+var TABS = [
+  {id:'home',     label:'Today',    icon:I.home},
+  {id:'agenda',   label:'Agenda',   icon:I.cal},
+  {id:'network',  label:'Network',  icon:I.people},
+  {id:'speakers', label:'Speakers', icon:I.mic},
+  {id:'more',     label:'More',     icon:I.more}
+];
+
+/* === DATA =================================================================== */
+var PEOPLE = [
+  {name:'Alex Chen',     role:'Senior PM',          company:'Stripe',     seed:2,  mutuals:['AI','fintech','product'],            avail:'Free at 15:30'},
+  {name:'Dana Goldberg', role:'Sustainability Lead', company:'Patagonia',  seed:5,  mutuals:['sustainability','design','climate'], avail:'In Hall B now'},
+  {name:'Priya Shah',    role:'Design Lead',         company:'Notion',     seed:8,  mutuals:['product design','systems'],          avail:'Available now'},
+  {name:'Ravi Mendez',   role:'Founder',             company:'Threadwise', seed:11, mutuals:['startups','AI'],                     avail:'Free after 16:00'}
+];
+var SPEAKERS = [
+  {name:'Daniel Wu',   title:'Principal Designer', company:'Figma',     seed:3, mutuals:['AI','product design'], session:'AI in Product Design',        sessionTime:'14:30 \u00b7 Hall B'},
+  {name:'Maya Levine', title:'Climate Researcher',  company:'TAU',       seed:6, mutuals:['sustainability'],      session:'Building Sustainable Cities', sessionTime:'14:00 \u00b7 Auditorium A'},
+  {name:'Sarah Chen',  title:'CEO',                 company:'Anthropic', seed:9, mutuals:['AI','ethics'],         session:'Closing Keynote',             sessionTime:'17:30 \u00b7 Main Stage'}
+];
+var SESSIONS = [
+  {title:'Building Sustainable Cities', time:'14:00', room:'Auditorium A',       speaker:'Maya Levine', speakerSeed:6, tag:'live', inAgenda:false},
+  {title:'AI in Product Design',        time:'14:30', room:'Hall B',             speaker:'Daniel Wu',   speakerSeed:3, tag:'next', inAgenda:true},
+  {title:'Networking Mixer',            time:'16:00', room:'Level 1 Open Floor',                         tag:null,      inAgenda:false},
+  {title:'Closing Keynote',             time:'17:30', room:'Main Stage',         speaker:'Sarah Chen',  speakerSeed:9, tag:null,   inAgenda:false}
+];
+var PERSON_GRADS = [
+  'linear-gradient(135deg,#2D1B69,#5B3DF5)',
+  'linear-gradient(135deg,#7C2D12,#E05B00)',
+  'linear-gradient(135deg,#0C2340,#0B4FB8)',
+  'linear-gradient(135deg,#052E16,#166534)',
+  'linear-gradient(135deg,#1A1915,#374151)',
+  'linear-gradient(135deg,#4A044E,#86198F)',
+  'linear-gradient(135deg,#0C4A6E,#0369A1)',
+  'linear-gradient(135deg,#14532D,#15803D)',
+  'linear-gradient(135deg,#78350F,#D97706)',
+  'linear-gradient(135deg,#881337,#E11D48)'
+];
+var BIO = {
+  'Alex Chen':     'Senior PM at Stripe leading Checkout. Previously Square and Braintree. 3 mutual interests with you. Known for shipping fast without cutting corners.',
+  'Dana Goldberg': 'Sustainability Lead at Patagonia driving their product sustainability roadmap. Speaker at COP28. Rare mix of deep domain expertise and a designer\'s eye.',
+  'Priya Shah':    'Design Lead at Notion heading up design systems. Previously at Airbnb Design. Runs a newsletter on design ops with 40k subscribers.',
+  'Ravi Mendez':   'Founder of Threadwise, an AI-powered fashion platform. Ex-YC W23. Sharp product instincts and ML background before pivoting to consumer.',
+  'Daniel Wu':     'Principal Designer at Figma, known for Dev Mode and collaborative workflows. Speaks frequently on AI in product design. Highly followed at this event.',
+  'Maya Levine':   'Climate researcher at TAU focused on sustainability metrics for urban planning. Work sits at the intersection of data, policy, and design.',
+  'Sarah Chen':    'CEO of Anthropic closing the summit today. Keynotes are dense with signal. Worth getting a seat early in Hall B, it fills 30 min before she speaks.'
+};
+
+/* === STATE ================================================================== */
+var S = {lifecycle:'live', page:'home', prevPage:'home', currentQuery:''};
+
+var CHIPS = {
+  home:    ["Who should I meet?","Where is Hall B?","What's on now?"],
+  agenda:  ["What's next for me?","Free time today?","Sessions I might have missed?"],
+  network: ["People near me now","Who shares my interests?","Find Alex Chen"],
+  speakers:["Who is on Main Stage now?","Daniel Wu - quick bio?","Sustainability speakers"],
+  more:    ["Lost and found?","Quiet room?","First aid?"]
+};
+
+/* === HELPERS ================================================================ */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sep() { return ' \u00b7 '; }
+
+/* === CARD BUILDERS ========================================================== */
+function cardPerson(c) {
+  var muts = (c.mutuals || []).slice(0,3).map(function(m){ return '<span class="bzc-mut">'+esc(m)+'</span>'; }).join('');
+  return '<article class="bzc" data-open-detail="person:'+esc(c.name)+'">'
+    +'<div class="bzc-ph">'+avImg(c.seed,44)+'</div>'
+    +'<div class="bzc-body">'
+      +'<div class="bzc-name">'+esc(c.name)+'</div>'
+      +'<div class="bzc-role">'+esc(c.role||'')+(c.company ? sep()+esc(c.company) : '')+'</div>'
+      +(c.avail ? '<div class="bzc-meta">'+I.clock+' '+esc(c.avail)+'</div>' : '')
+      +(muts ? '<div class="bzc-muts">'+muts+'</div>' : '')
+    +'</div>'
+    +'<div class="bzc-actions">'
+      +'<button class="bzc-btn bzc-btn-primary" data-action="meet:'+esc(c.name)+'">'+I.msg+' Meet</button>'
+    +'</div>'
+    +'</article>';
+}
+
+function cardSpeaker(c) {
+  var muts = (c.mutuals || []).slice(0,3).map(function(m){ return '<span class="bzc-mut">'+esc(m)+'</span>'; }).join('');
+  return '<article class="bzc" data-open-detail="speaker:'+esc(c.name)+'">'
+    +'<div class="bzc-ph">'+avImg(c.seed,44)+'</div>'
+    +'<div class="bzc-body">'
+      +'<div class="bzc-name">'+esc(c.name)+'</div>'
+      +'<div class="bzc-role">'+esc(c.title||'')+(c.company ? sep()+esc(c.company) : '')+'</div>'
+      +(c.session ? '<div class="bzc-meta">'+I.clock+' '+esc(c.sessionTime||'')+sep()+esc(c.session)+'</div>' : '')
+      +(muts ? '<div class="bzc-muts">'+muts+'</div>' : '')
+    +'</div>'
+    +'<div class="bzc-actions">'
+      +'<button class="bzc-btn bzc-btn-primary" data-action="follow:'+esc(c.name)+'">Follow</button>'
+    +'</div>'
+    +'</article>';
+}
+
+function cardSpeakerFull(c) {
+  var muts = (c.mutuals || []).slice(0,3).map(function(m){ return '<span class="bzc-mut">'+esc(m)+'</span>'; }).join('');
+  var grad = PERSON_GRADS[c.seed % PERSON_GRADS.length];
+  return '<div class="spk-card" data-open-detail="speaker:'+esc(c.name)+'">'
+    +'<div class="spk-card-img" style="background:'+grad+';">'
+      +'<div class="spk-card-av">'+avImg(c.seed,56)+'</div>'
+    +'</div>'
+    +'<div class="spk-card-body">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
+        +'<div>'
+          +'<div class="spk-card-name">'+esc(c.name)+'</div>'
+          +'<div class="spk-card-role">'+esc(c.title)+(c.company ? sep()+esc(c.company) : '')+'</div>'
+          +(muts ? '<div class="bzc-muts" style="margin-top:5px;">'+muts+'</div>' : '')
+        +'</div>'
+        +'<button class="bzc-btn bzc-btn-primary" style="margin-top:2px;flex-shrink:0;" data-action="follow:'+esc(c.name)+'">Follow</button>'
+      +'</div>'
+      +'<div class="spk-card-foot">'
+        +'<div class="spk-card-session">'+I.clock+' '+esc(c.sessionTime||'')+sep()+esc(c.session||'')+'</div>'
+      +'</div>'
+    +'</div>'
+    +'</div>';
+}
+
+function cardSession(c) {
+  var tag = '';
+  if (c.tag === 'live') tag = '<span class="bzc-tag bzc-tag-live"><span class="bzc-dot"></span>Live now</span>';
+  else if (c.tag === 'next') tag = '<span class="bzc-tag bzc-tag-next">Up next</span>';
+  var cta = c.inAgenda
+    ? '<button class="bzc-btn bzc-btn-soft" data-action="remove:'+esc(c.title)+'">'+I.check+' Saved</button>'
+    : '<button class="bzc-btn bzc-btn-primary" data-action="add:'+esc(c.title)+'">'+I.plus+' Add</button>';
+  var speakerBit = '';
+  if (c.speakerSeed) {
+    speakerBit = '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">'
+      +'<div style="width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;">'+avImg(c.speakerSeed,20)+'</div>'
+      +'<span style="font-size:11px;color:var(--t3);">'+esc(c.speaker||'')+'</span>'
+      +'</div>';
+  } else if (c.speaker) {
+    speakerBit = '<div class="bzc-meta">'+I.pin+' '+esc(c.room||'')+sep()+esc(c.speaker)+'</div>';
+  } else {
+    speakerBit = '<div class="bzc-meta">'+I.pin+' '+esc(c.room||'')+'</div>';
+  }
+  return '<article class="bzc bzc-session" data-open-detail="session:'+esc(c.title)+'">'
+    +'<div class="bzc-time">'
+      +'<div class="bzc-time-num">'+esc((c.time||'').split(':')[0]||'')+'</div>'
+      +'<div class="bzc-time-min">'+esc((c.time||'').split(':')[1]||'00')+'</div>'
+    +'</div>'
+    +'<div class="bzc-body">'+tag+'<div class="bzc-name">'+esc(c.title)+'</div>'+speakerBit+'</div>'
+    +'<div class="bzc-actions">'+cta+'</div>'
+    +'</article>';
+}
+
+function cardWifi() {
+  return '<article class="bzc bzc-wifi">'
+    +'<div class="bzc-wifi-icon">'+I.wifi+'</div>'
+    +'<div class="bzc-body">'
+      +'<div class="bzc-wifi-row"><span class="bzc-wifi-lbl">Network</span><span class="bzc-wifi-val">EventGuest_5G</span></div>'
+      +'<div class="bzc-wifi-row"><span class="bzc-wifi-lbl">Password</span><span class="bzc-wifi-val">Summit2025!</span></div>'
+    +'</div>'
+    +'<button class="bzc-btn bzc-btn-soft" data-action="copy-wifi">'+I.copy+' Copy</button>'
+    +'</article>';
+}
+
+function cardPlace(name, level, walkMin, hint) {
+  return '<article class="bzc">'
+    +'<div class="bzc-map"><svg viewBox="0 0 80 56" xmlns="http://www.w3.org/2000/svg">'
+      +'<rect width="80" height="56" fill="#EEF2F7"/>'
+      +'<path d="M0 18 H 80 M 0 36 H 80 M 26 0 V 56 M 54 0 V 56" stroke="#D8DEE6" stroke-width=".6"/>'
+      +'<circle cx="40" cy="28" r="4" fill="#F30C5F"/>'
+      +'<circle cx="40" cy="28" r="9" fill="none" stroke="#F30C5F" stroke-opacity=".25" stroke-width="1.2"/>'
+    +'</svg></div>'
+    +'<div class="bzc-body">'
+      +'<div class="bzc-name">'+esc(name)+'</div>'
+      +'<div class="bzc-meta">'+I.pin+' '+esc(level)+(walkMin ? sep()+walkMin+' min walk' : '')+'</div>'
+      +(hint ? '<div class="bzc-hint">'+esc(hint)+'</div>' : '')
+    +'</div>'
+    +'<div class="bzc-actions"><button class="bzc-btn bzc-btn-primary" data-action="directions:'+esc(name)+'">Directions</button></div>'
+    +'</article>';
+}
+
+function cardSponsor(name, booth, hook, cta) {
+  return '<article class="bzc">'
+    +'<div class="bzc-logo">'+esc((name||'?')[0])+'</div>'
+    +'<div class="bzc-body">'
+      +'<div class="bzc-name">'+esc(name)+'</div>'
+      +'<div class="bzc-meta">'+I.pin+' '+esc(booth||'')+'</div>'
+      +(hook ? '<div class="bzc-hint">'+esc(hook)+'</div>' : '')
+    +'</div>'
+    +'<div class="bzc-actions"><button class="bzc-btn bzc-btn-primary" data-action="sponsor:'+esc(name)+'">'+esc(cta||'Visit')+'</button></div>'
+    +'</article>';
+}
+
+function cardSchedule(items) {
+  var rows = items.map(function(it) {
+    var tag = '';
+    if (it.tag === 'live') tag = '<span class="bzc-tag bzc-tag-live"><span class="bzc-dot"></span>Live</span>';
+    else if (it.tag === 'next') tag = '<span class="bzc-tag bzc-tag-next">Next</span>';
+    var av = it.speakerSeed ? '<div style="display:inline-flex;align-items:center;margin-left:6px;"><div style="width:16px;height:16px;border-radius:50%;overflow:hidden;display:inline-flex;">'+avImg(it.speakerSeed,16)+'</div></div>' : '';
+    return '<div class="bzc-sch-row">'
+      +'<div class="bzc-sch-time">'+esc(it.time)+'</div>'
+      +'<div><div class="bzc-sch-title">'+esc(it.title||'')+av+' '+tag+'</div><div class="bzc-sch-meta">'+esc(it.meta||'')+'</div></div>'
+      +'</div>';
+  }).join('');
+  return '<article class="bzc bzc-schedule">'+rows+'</article>';
+}
+
+function renderCards(cards) {
+  return cards.map(function(c) {
+    if (c.type === 'speaker')  return cardSpeaker(c);
+    if (c.type === 'session')  return cardSession(c);
+    if (c.type === 'person')   return cardPerson(c);
+    if (c.type === 'wifi')     return cardWifi();
+    if (c.type === 'place')    return cardPlace(c.name, c.level, c.walkMin, c.hint);
+    if (c.type === 'sponsor')  return cardSponsor(c.name, c.booth, c.hook, c.cta);
+    if (c.type === 'schedule') return cardSchedule(c.items);
+    return '';
+  }).join('');
+}
+
+/* === RESPONSE DB ============================================================ */
+function resp(kind, title, extra) {
+  var r = {kind:kind, titleHtml:title};
+  if (extra) { for (var k in extra) { if (extra.hasOwnProperty(k)) r[k] = extra[k]; } }
+  return r;
+}
+
+function getResponse(q) {
+  if (/^(hi|hello|hey|howdy|yo)\b/i.test(q))
+    return resp('chat','Hey there.', {text:"Day 2 is moving fast. AI in Product Design kicks off in 23 min at Hall B. Anything I can help you find?", chips:["What's on now?","Who should I meet?","Where is Hall B?"]});
+  if (/how are you|how.?re you|you ok/i.test(q))
+    return resp('chat','Running smoothly.', {text:"All systems up. Daniel Wu is in 23 min at Hall B and there's a networking mixer at 16:00. What do you need?", chips:["What's on now?","Who should I meet?","WiFi password?"]});
+  if (/thank|cheers|great|perfect|awesome/i.test(q))
+    return resp('chat','Anytime.', {text:"Happy to help. Anything else before the session starts?", chips:["What's next?","Find someone to meet","Directions to Hall B"]});
+  if (/good (morning|afternoon|evening)/i.test(q))
+    return resp('chat','Good to see you.', {text:"Day 2 is in full swing. AI in Product Design at 14:30 is one to catch, and there's a networking mixer at 16:00.", chips:["Plan my afternoon","Who should I meet?","What's on now?"]});
+  if (/bored|nothing to do|free now/i.test(q))
+    return resp('chat',"There's plenty.", {text:"Drop-in networking on Level 1 is good right now. Figma is running live Dev Mode demos at Booth 12, and Daniel Wu starts in 23 min.", chips:["Find someone to meet","Where is Figma booth?","Show full schedule"]});
+  if (/tired|need a break|need coffee/i.test(q))
+    return resp('chat','Quiet room on Level 2.', {text:"Level 2 East has a quiet zone with seating. Coffee bar is near the Main Stage entrance, about 3 min from Hall B.", chips:["Where is Hall B?","What's next for me?","WiFi password?"]});
+  if (/wifi|wi-fi|password|internet/i.test(q))
+    return resp('cards','Here you go.', {cards:[{type:'wifi'}], chips:["Where is Hall B?","What's on now?","Who should I meet?"]});
+  if (/what.?s on now|happening now|right now|on now/i.test(q))
+    return resp('cards','Right now on stage.', {cards:[{type:'session',title:SESSIONS[0].title,time:SESSIONS[0].time,room:SESSIONS[0].room,speaker:SESSIONS[0].speaker,speakerSeed:SESSIONS[0].speakerSeed,tag:SESSIONS[0].tag,inAgenda:SESSIONS[0].inAgenda},{type:'session',title:SESSIONS[1].title,time:SESSIONS[1].time,room:SESSIONS[1].room,speaker:SESSIONS[1].speaker,speakerSeed:SESSIONS[1].speakerSeed,tag:SESSIONS[1].tag,inAgenda:SESSIONS[1].inAgenda}], chips:["Add to agenda","Where is Auditorium A?","Who is Maya Levine?"]});
+  if (/what.?s next|next for me|next session|coming up/i.test(q))
+    return resp('cards','23 minutes until your next.', {cards:[{type:'session',title:SESSIONS[1].title,time:SESSIONS[1].time,room:SESSIONS[1].room,speaker:SESSIONS[1].speaker,speakerSeed:SESSIONS[1].speakerSeed,tag:SESSIONS[1].tag,inAgenda:SESSIONS[1].inAgenda}], chips:["Directions to Hall B","Who is Daniel Wu?","What comes after?"]});
+  if (/after that|what comes after|following/i.test(q))
+    return resp('cards','After AI in Product Design...', {cards:[{type:'session',title:SESSIONS[2].title,time:SESSIONS[2].time,room:SESSIONS[2].room,tag:SESSIONS[2].tag,inAgenda:SESSIONS[2].inAgenda},{type:'session',title:SESSIONS[3].title,time:SESSIONS[3].time,room:SESSIONS[3].room,speaker:SESSIONS[3].speaker,speakerSeed:SESSIONS[3].speakerSeed,tag:SESSIONS[3].tag,inAgenda:SESSIONS[3].inAgenda}], chips:["Add mixer to agenda","Who's keynoting?","Plan my afternoon"]});
+  if (/plan.*(afternoon|day|morning)|build.*plan/i.test(q))
+    return resp('cards',"Here's a solid afternoon.", {cards:[{type:'schedule',items:[{time:'14:00',title:'Building Sustainable Cities',meta:'Auditorium A',tag:'live',speakerSeed:6},{time:'14:30',title:'AI in Product Design',meta:'Hall B',tag:'next',speakerSeed:3},{time:'16:00',title:'Networking Mixer',meta:'Level 1 Open Floor'},{time:'17:30',title:'Closing Keynote',meta:'Main Stage',speakerSeed:9}]}], chips:["Add all to agenda","Who should I meet before 16:00?","Where is Hall B?"]});
+  if (/(full |show |all )?schedule|all sessions/i.test(q))
+    return resp('nav','Full schedule is easiest in the Agenda tab.', {target:'agenda', chips:["Yes, open Agenda","No, show here"]});
+  if (/free time|gaps|window/i.test(q))
+    return resp('chat','You have a 23-min window.', {text:"Good time for coffee, the Figma booth (live demos running now), or a quick round of networking on Level 1.", chips:["Who is nearby now?","Where is Figma booth?","Directions to Hall B"]});
+  if (/daniel wu/i.test(q))
+    return resp('cards','Daniel Wu - Figma.', {cards:[{type:'speaker',name:SPEAKERS[0].name,title:SPEAKERS[0].title,company:SPEAKERS[0].company,seed:SPEAKERS[0].seed,mutuals:SPEAKERS[0].mutuals,session:SPEAKERS[0].session,sessionTime:SPEAKERS[0].sessionTime}], chips:["Add session to agenda","Directions to Hall B","Follow Daniel Wu"]});
+  if (/maya levine|sustainable cities/i.test(q))
+    return resp('cards','Maya Levine - TAU.', {cards:[{type:'speaker',name:SPEAKERS[1].name,title:SPEAKERS[1].title,company:SPEAKERS[1].company,seed:SPEAKERS[1].seed,mutuals:SPEAKERS[1].mutuals,session:SPEAKERS[1].session,sessionTime:SPEAKERS[1].sessionTime}], chips:["Add session to agenda","Where is Auditorium A?","Sustainability sessions"]});
+  if (/sarah chen|closing keynote/i.test(q))
+    return resp('cards','Sarah Chen closes the day.', {cards:[{type:'speaker',name:SPEAKERS[2].name,title:SPEAKERS[2].title,company:SPEAKERS[2].company,seed:SPEAKERS[2].seed,mutuals:SPEAKERS[2].mutuals,session:SPEAKERS[2].session,sessionTime:SPEAKERS[2].sessionTime}], chips:["Add keynote to agenda","Who else is speaking?","Where is Main Stage?"]});
+  if (/speakers|who.?s speaking|top (speakers|3)|ai speakers/i.test(q))
+    return resp('cards','Top picks based on your interests.', {cards:[{type:'speaker',name:SPEAKERS[0].name,title:SPEAKERS[0].title,company:SPEAKERS[0].company,seed:SPEAKERS[0].seed,mutuals:SPEAKERS[0].mutuals,session:SPEAKERS[0].session,sessionTime:SPEAKERS[0].sessionTime},{type:'speaker',name:SPEAKERS[1].name,title:SPEAKERS[1].title,company:SPEAKERS[1].company,seed:SPEAKERS[1].seed,mutuals:SPEAKERS[1].mutuals,session:SPEAKERS[1].session,sessionTime:SPEAKERS[1].sessionTime},{type:'speaker',name:SPEAKERS[2].name,title:SPEAKERS[2].title,company:SPEAKERS[2].company,seed:SPEAKERS[2].seed,mutuals:SPEAKERS[2].mutuals,session:SPEAKERS[2].session,sessionTime:SPEAKERS[2].sessionTime}], chips:["Follow all 3","Where is Hall B?","Sustainability speakers"]});
+  if (/alex chen/i.test(q))
+    return resp('cards','Alex Chen - free at 15:30.', {cards:[{type:'person',name:PEOPLE[0].name,role:PEOPLE[0].role,company:PEOPLE[0].company,seed:PEOPLE[0].seed,mutuals:PEOPLE[0].mutuals,avail:PEOPLE[0].avail}], chips:["Send Alex a meeting request","More from Stripe","Find someone else"]});
+  if (/dana goldberg|patagonia/i.test(q))
+    return resp('cards','Dana Goldberg is in Hall B.', {cards:[{type:'person',name:PEOPLE[1].name,role:PEOPLE[1].role,company:PEOPLE[1].company,seed:PEOPLE[1].seed,mutuals:PEOPLE[1].mutuals,avail:PEOPLE[1].avail}], chips:["Send Dana a note","More sustainability folks","Who else is in Hall B?"]});
+  if (/priya shah|notion/i.test(q))
+    return resp('cards','Priya Shah is available now.', {cards:[{type:'person',name:PEOPLE[2].name,role:PEOPLE[2].role,company:PEOPLE[2].company,seed:PEOPLE[2].seed,mutuals:PEOPLE[2].mutuals,avail:PEOPLE[2].avail}], chips:["Send Priya a note","More from Notion","Network full list"]});
+  if (/ravi|threadwise/i.test(q))
+    return resp('cards','Ravi Mendez - free after 16.', {cards:[{type:'person',name:PEOPLE[3].name,role:PEOPLE[3].role,company:PEOPLE[3].company,seed:PEOPLE[3].seed,mutuals:PEOPLE[3].mutuals,avail:PEOPLE[3].avail}], chips:["Send Ravi a note","AI founders here","More suggestions"]});
+  if (/who should i meet|meet|networking|suggest.*people/i.test(q))
+    return resp('cards','2 people worth meeting today.', {cards:[{type:'person',name:PEOPLE[0].name,role:PEOPLE[0].role,company:PEOPLE[0].company,seed:PEOPLE[0].seed,mutuals:PEOPLE[0].mutuals,avail:PEOPLE[0].avail},{type:'person',name:PEOPLE[1].name,role:PEOPLE[1].role,company:PEOPLE[1].company,seed:PEOPLE[1].seed,mutuals:PEOPLE[1].mutuals,avail:PEOPLE[1].avail}], chips:["Message Alex Chen","Find Priya Shah","More suggestions"]});
+  if (/nearby|people.*now|who.?s (here|around)/i.test(q))
+    return resp('cards','2 people within 50m.', {cards:[{type:'person',name:PEOPLE[1].name,role:PEOPLE[1].role,company:PEOPLE[1].company,seed:PEOPLE[1].seed,mutuals:PEOPLE[1].mutuals,avail:PEOPLE[1].avail},{type:'person',name:PEOPLE[2].name,role:PEOPLE[2].role,company:PEOPLE[2].company,seed:PEOPLE[2].seed,mutuals:PEOPLE[2].mutuals,avail:PEOPLE[2].avail}], chips:["Message Dana","Open Network tab","Who shares my interests?"]});
+  if (/all.*network|attendee list/i.test(q))
+    return resp('nav','380+ attendees - Network tab is built to filter and browse.', {target:'network', chips:["Yes, open Network","No, suggest 2 for me"]});
+  if (/message|send.*note|reach out|meeting request/i.test(q))
+    return resp('propose',null, {proposeLabel:'MEETING REQUEST', proposeDetail:'Send a 15-min coffee chat request to Alex Chen for 15:30 today?', confirmLabel:'Send request', confirmAction:'send-meeting', dismissLabel:'Not now', chips:["Find another time","More from Stripe","Message someone else"]});
+  if (/hall b/i.test(q))
+    return resp('cards','Hall B is 4 min away.', {cards:[{type:'place',name:'Hall B',level:'Level 2 North',walkMin:4,hint:'Take the east escalator past Main Stage'}], chips:["What's on in Hall B?","Who is Daniel Wu?","Add session to agenda"]});
+  if (/auditorium a/i.test(q))
+    return resp('cards','Auditorium A - Level 1 South.', {cards:[{type:'place',name:'Auditorium A',level:'Level 1 South',walkMin:3,hint:'Walk south through the main lobby'}], chips:["What's on there now?","Who is Maya Levine?","Show full schedule"]});
+  if (/main stage/i.test(q))
+    return resp('cards','Main Stage - ground floor.', {cards:[{type:'place',name:'Main Stage',level:'Ground Floor, Central',walkMin:2,hint:'Straight through the main entrance doors'}], chips:["What's on Main Stage?","Who is keynoting?","Show full schedule"]});
+  if (/registration|check.?in/i.test(q))
+    return resp('cards','Registration is on Level 0.', {cards:[{type:'place',name:'Registration',level:'Level 0, Main Entrance',walkMin:2,hint:'Lanes A-B for badge pickup, C-D for walk-ins'}], chips:["WiFi password?","What's on first?","Build my today plan"]});
+  if (/bathroom|toilet|restroom/i.test(q))
+    return resp('chat','Bathrooms on every floor.', {text:"Closest are Level 2 East past the escalator, and Level 1 near Auditorium A. Both under 2 min.", chips:["Where is Hall B?","WiFi password?","What else is nearby?"]});
+  if (/quiet room|quiet zone/i.test(q))
+    return resp('cards','Quiet zone - Level 2 East.', {cards:[{type:'place',name:'Quiet Zone',level:'Level 2 East',walkMin:3,hint:'Behind the sponsor booths, soft seating available'}], chips:["What's next for me?","WiFi password?","Coffee nearby?"]});
+  if (/coffee|cafe|food|eat|lunch|snack/i.test(q))
+    return resp('chat','Coffee bar near Main Stage.', {text:"Coffee station at the Main Stage entrance (2 min walk). Catering on Level 1 has sandwiches until 17:00.", chips:["Where is Main Stage?","What's on now?","Networking nearby?"]});
+  if (/first aid|medical|emergency|ambulance|fire|evacuation|sick|hurt/i.test(q))
+    return resp('emergency',null, {text:'Call 101 (medical) or 102 (fire).\nOn-site first aid: Level 0 near Gate 1, green cross sign.\nSecurity desk: Level 0 main lobby.\nEvacuation assembly: East Car Park, Gate 3.', chips:["Where is first aid?","Security contact","Evacuation route"]});
+  if (/lost.*found|lost (my|a)|can.?t find my/i.test(q))
+    return resp('chat','Lost and Found is at Level 0.', {text:"Head to the security desk at Level 0 main lobby.", chips:["Where is security desk?","WiFi password?","What's on now?"]});
+  if (/figma.*booth|booth.*figma|where.*figma/i.test(q))
+    return resp('cards','Figma is at Booth 12.', {cards:[{type:'sponsor',name:'Figma',booth:'Booth 12, Level 1',hook:'Live Dev Mode demo every 30 min - next at 15:00',cta:'See booth'}], chips:["Directions to Booth 12","Stripe booth?","Demos happening now"]});
+  if (/stripe.*booth|booth.*stripe/i.test(q))
+    return resp('cards','Stripe is at Booth 7.', {cards:[{type:'sponsor',name:'Stripe',booth:'Booth 7, Level 1',hook:'Hiring designers - talk to Alex at the booth',cta:'See booth'}], chips:["Directions to Booth 7","Figma booth?","Who is hiring here?"]});
+  if (/sponsor|booth|exhibit/i.test(q))
+    return resp('cards','Top sponsor booths on Level 1.', {cards:[{type:'sponsor',name:'Figma',booth:'Booth 12, Level 1',hook:'Live Dev Mode demos every 30 min',cta:'See booth'},{type:'sponsor',name:'Stripe',booth:'Booth 7, Level 1',hook:'Hiring designers',cta:'See booth'}], chips:["Where is Figma?","Booths with demos","Sponsors hiring"]});
+  if (/add.*agenda|save.*session/i.test(q))
+    return resp('propose',null, {proposeLabel:'ADD TO AGENDA', proposeDetail:'Add "AI in Product Design" (14:30, Hall B) to your agenda?', confirmLabel:'Add session', confirmAction:'add-agenda', dismissLabel:'Not now', chips:["What else is on?","Who is Daniel Wu?","Directions to Hall B"]});
+  if (/broken|not work|useless|terrible/i.test(q))
+    return resp('chat','Sounds frustrating.', {text:"Sorry about that. Can you tell me what's not working? You can also access info at websummit.com.", chips:["WiFi password?","What's on now?","Contact support"]});
+  if (/summarise|in place|show here/i.test(q))
+    return resp('cards','Today at a glance.', {cards:[{type:'schedule',items:[{time:'14:00',title:'Building Sustainable Cities',meta:'Auditorium A',tag:'live',speakerSeed:6},{time:'14:30',title:'AI in Product Design',meta:'Hall B',tag:'next',speakerSeed:3},{time:'16:00',title:'Networking Mixer',meta:'Level 1 Open Floor'},{time:'17:30',title:'Closing Keynote',meta:'Main Stage',speakerSeed:9}]}], chips:["Add AI session","Who should I meet?","Where is Hall B?"]});
+  return resp('chat',"I'm on it.", {text:"I don't have the exact answer right now, but the information desk is on Level 0. Anything else I can help with?", chips:["What's on now?","Who should I meet?","WiFi password?"]});
+}
+
+/* === MODAL RENDER =========================================================== */
+function fuHtml(chips) {
+  if (!chips || !chips.length) return '';
+  var rows = chips.map(function(c) {
+    return '<button class="fu-chip" data-prompt="'+esc(c)+'">'
+      +'<span class="fi">'+I.spark+'</span>'
+      +'<span>'+esc(c)+'</span>'
+      +'<span class="fa">'+I.arrow+'</span>'
+      +'</button>';
+  }).join('');
+  return '<div class="fu-label">'+I.spark+' Follow up</div><div class="fu-chips">'+rows+'</div>';
+}
+
+function tabLabel(id) {
+  var t = TABS.filter(function(x){ return x.id === id; })[0];
+  return t ? t.label : id;
+}
+
+function renderModalContent(r) {
+  if (!r) return '';
+  var h = '<div class="morph">';
+  if (r.kind === 'cards') {
+    h += '<div class="m-title">'+(r.titleHtml||'Here\'s what I found.')+'</div>';
+    h += '<div class="m-cards">'+renderCards(r.cards||[])+'</div>';
+    h += fuHtml(r.chips);
+  } else if (r.kind === 'nav') {
+    h += '<div class="m-title">'+(r.text||'')+'</div>';
+    h += '<div class="yesno">'
+      +'<button class="no" data-stay>No, show here</button>'
+      +'<button class="yes" data-nav="'+esc(r.target||'home')+'">Yes, open '+tabLabel(r.target)+' '+I.arrow+'</button>'
+      +'</div>';
+    h += fuHtml(r.chips);
+  } else if (r.kind === 'chat') {
+    h += '<div class="m-title">'+(r.titleHtml||'')+'</div>';
+    if (r.text) h += '<div class="m-text">'+esc(r.text)+'</div>';
+    h += fuHtml(r.chips);
+  } else if (r.kind === 'propose') {
+    h += '<div class="m-title">Quick check.</div>';
+    h += '<div class="propose-card">'
+      +'<div class="propose-label">'+esc(r.proposeLabel)+'</div>'
+      +'<div class="propose-detail">'+esc(r.proposeDetail)+'</div>'
+      +'<div class="propose-actions">'
+        +'<button class="propose-dismiss" data-dismiss>'+esc(r.dismissLabel||'Not now')+'</button>'
+        +'<button class="propose-confirm" data-confirm="'+esc(r.confirmAction||'')+'">'+esc(r.confirmLabel)+'</button>'
+      +'</div>'
+      +'</div>';
+    h += fuHtml(r.chips);
+  } else if (r.kind === 'emergency') {
+    h += '<div class="m-title">Emergency</div>';
+    h += '<div class="emergency-card">'
+      +'<div class="ec-title">Act fast</div>'
+      +'<div class="ec-body">'+esc(r.text||'').replace(/\n/g,'<br>')+'</div>'
+      +'</div>';
+    h += fuHtml(r.chips);
+  }
+  h += '</div>';
+  return h;
+}
+
+/* === DETAIL PAGE ============================================================ */
+function openDetail(type, id) {
+  closeModal();
+  S.prevPage = S.page;
+  var scroll = document.getElementById('detail-scroll');
+  var ctaBar = document.getElementById('detail-cta-bar');
+  var navTitle = document.getElementById('detail-nav-title');
+  var html = '';
+  var ctas = '';
+  var title = id;
+  var grad, muts, i;
+
+  if (type === 'person') {
+    var p = null;
+    for (i = 0; i < PEOPLE.length; i++) { if (PEOPLE[i].name === id) { p = PEOPLE[i]; break; } }
+    if (!p) p = PEOPLE[0];
+    grad = PERSON_GRADS[p.seed % PERSON_GRADS.length];
+    muts = (p.mutuals||[]).map(function(m){ return '<span class="d-mut">'+esc(m)+'</span>'; }).join('');
+    title = p.name;
+    html = '<div class="d-banner"><div class="d-banner-bg" style="background:'+grad+';"></div>'
+      +'<div class="d-banner-pattern"></div><div class="d-banner-overlay"></div>'
+      +'<div class="d-banner-av">'+avImg(p.seed,72)+'</div></div>'
+      +'<div class="d-body">'
+        +'<div class="d-name">'+esc(p.name)+'</div>'
+        +'<div class="d-role">'+esc(p.role||'')+(p.company?sep()+esc(p.company):'')+'</div>'
+        +(muts?'<div class="d-muts">'+muts+'</div>':'')
+        +'<div class="d-stats">'
+          +'<div class="d-stat"><div class="d-stat-val">3</div><div class="d-stat-lbl">In common</div></div>'
+          +'<div class="d-stat"><div class="d-stat-val">92</div><div class="d-stat-lbl">Match %</div></div>'
+          +'<div class="d-stat"><div class="d-stat-val">0</div><div class="d-stat-lbl">Meetings</div></div>'
+        +'</div>'
+        +'<div class="d-bio">'+esc(BIO[p.name]||'')+'</div>'
+        +'<div class="d-section"><div class="d-section-label">Details</div>'
+          +'<div class="d-row"><div class="d-row-icon">'+I.clock+'</div><div><div class="d-row-lbl">Availability</div><div class="d-row-val">'+esc(p.avail)+'</div></div></div>'
+          +'<div class="d-row"><div class="d-row-icon">'+I.pin+'</div><div><div class="d-row-lbl">Company</div><div class="d-row-val">'+esc(p.company||'')+'</div></div></div>'
+        +'</div>'
+      +'</div>';
+    ctas = '<button class="dcta-btn dcta-accent" data-action="meet:'+esc(p.name)+'">'+I.msg+' Request meeting</button>'
+          +'<button class="dcta-btn dcta-secondary">View profile</button>';
+
+  } else if (type === 'speaker') {
+    var sp = null;
+    for (i = 0; i < SPEAKERS.length; i++) { if (SPEAKERS[i].name === id) { sp = SPEAKERS[i]; break; } }
+    if (!sp) sp = SPEAKERS[0];
+    grad = PERSON_GRADS[sp.seed % PERSON_GRADS.length];
+    muts = (sp.mutuals||[]).map(function(m){ return '<span class="d-mut">'+esc(m)+'</span>'; }).join('');
+    title = sp.name;
+    html = '<div class="d-banner"><div class="d-banner-bg" style="background:'+grad+';"></div>'
+      +'<div class="d-banner-pattern"></div><div class="d-banner-overlay"></div>'
+      +'<div class="d-banner-av">'+avImg(sp.seed,72)+'</div></div>'
+      +'<div class="d-body">'
+        +'<div class="d-name">'+esc(sp.name)+'</div>'
+        +'<div class="d-role">'+esc(sp.title||'')+(sp.company?sep()+esc(sp.company):'')+'</div>'
+        +(muts?'<div class="d-muts">'+muts+'</div>':'')
+        +'<div class="d-bio">'+esc(BIO[sp.name]||'')+'</div>'
+        +'<div class="d-section"><div class="d-section-label">Speaking</div>'
+          +'<div class="d-row"><div class="d-row-icon">'+I.clock+'</div><div><div class="d-row-lbl">Session</div><div class="d-row-val">'+esc(sp.session||'')+'</div></div></div>'
+          +'<div class="d-row"><div class="d-row-icon">'+I.pin+'</div><div><div class="d-row-lbl">When &amp; where</div><div class="d-row-val">'+esc(sp.sessionTime||'')+'</div></div></div>'
+        +'</div>'
+      +'</div>';
+    ctas = '<button class="dcta-btn dcta-primary" data-action="follow:'+esc(sp.name)+'">Follow speaker</button>'
+          +'<button class="dcta-btn dcta-secondary" data-action="add:'+esc(sp.session||'')+'">'+I.plus+' Add session</button>';
+
+  } else if (type === 'session') {
+    var sess = null;
+    for (i = 0; i < SESSIONS.length; i++) { if (SESSIONS[i].title === id) { sess = SESSIONS[i]; break; } }
+    if (!sess) sess = SESSIONS[0];
+    var spk = null;
+    if (sess.speakerSeed) {
+      for (i = 0; i < SPEAKERS.length; i++) { if (SPEAKERS[i].name === sess.speaker) { spk = SPEAKERS[i]; break; } }
+    }
+    var sessGrads = ['linear-gradient(135deg,#0C2340,#0B4FB8)','linear-gradient(135deg,#052E16,#166534)','linear-gradient(135deg,#2D1B69,#5B3DF5)','linear-gradient(135deg,#7C2D12,#DC6803)','linear-gradient(135deg,#1A1915,#374151)'];
+    var sessGrad = sessGrads[(sess.speakerSeed||1) % sessGrads.length];
+    var tagBanner = '';
+    if (sess.tag === 'live') tagBanner = '<span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(220,38,38,.18);color:#ff6b6b;font-weight:600;margin-bottom:8px;"><span style="width:5px;height:5px;border-radius:50%;background:#DC2626;"></span>Live now</span>';
+    else if (sess.tag === 'next') tagBanner = '<span style="display:inline-flex;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);color:rgba(255,255,255,.85);font-weight:600;margin-bottom:8px;">Up next</span>';
+    var speakerRow = '';
+    if (spk) {
+      speakerRow = '<div class="d-section"><div class="d-section-label">Speaker</div>'
+        +'<div class="d-person-row" data-open-detail="speaker:'+esc(spk.name)+'">'
+          +'<div class="d-person-ph">'+avImg(spk.seed,40)+'</div>'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div class="d-person-name">'+esc(spk.name)+'</div>'
+            +'<div class="d-person-role">'+esc(spk.title||'')+(spk.company?sep()+esc(spk.company):'')+'</div>'
+          +'</div>'
+          +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B5B2A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+        +'</div></div>';
+    }
+    title = sess.title;
+    html = '<div class="d-session-banner" style="background:'+sessGrad+';">'
+      +tagBanner
+      +'<div class="d-session-label">Today\'s session</div>'
+      +'<div class="d-session-time-big">'+esc(sess.time||'')+'</div>'
+      +'<div class="d-session-title">'+esc(sess.title)+'</div>'
+      +'<div class="d-session-room">'+I.pin+' '+esc(sess.room||'')+'</div>'
+      +'</div>'
+      +'<div class="d-body no-offset">'
+        +speakerRow
+        +'<div class="d-section"><div class="d-section-label">Details</div>'
+          +'<div class="d-row"><div class="d-row-icon">'+I.clock+'</div><div><div class="d-row-lbl">Time</div><div class="d-row-val">'+esc(sess.time||'')+'</div></div></div>'
+          +'<div class="d-row"><div class="d-row-icon">'+I.pin+'</div><div><div class="d-row-lbl">Location</div><div class="d-row-val">'+esc(sess.room||'')+'</div></div></div>'
+        +'</div>'
+        +'<div class="d-stats">'
+          +'<div class="d-stat"><div class="d-stat-val">320</div><div class="d-stat-lbl">Attending</div></div>'
+          +'<div class="d-stat"><div class="d-stat-val">45</div><div class="d-stat-lbl">Min</div></div>'
+          +'<div class="d-stat"><div class="d-stat-val">'+(sess.inAgenda?'&#10003;':'+')+'</div><div class="d-stat-lbl">Agenda</div></div>'
+        +'</div>'
+      +'</div>';
+    ctas = sess.inAgenda
+      ? '<button class="dcta-btn dcta-secondary" data-action="remove:'+esc(sess.title)+'">'+I.check+' In agenda</button>'
+        +'<button class="dcta-btn dcta-primary" data-directions="'+esc(sess.room||'')+'">'+I.pin+' Directions</button>'
+      : '<button class="dcta-btn dcta-accent" data-action="add:'+esc(sess.title)+'">'+I.plus+' Add to agenda</button>'
+        +'<button class="dcta-btn dcta-primary" data-directions="'+esc(sess.room||'')+'">'+I.pin+' Directions</button>';
+  }
+
+  scroll.innerHTML = html;
+  navTitle.textContent = title;
+  ctaBar.innerHTML = ctas;
+  ctaBar.classList.toggle('hidden', !ctas);
+  ctaBar.querySelectorAll('[data-action]').forEach(bindCardAction);
+  ctaBar.querySelectorAll('[data-directions]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      closeDetail();
+      ask('Directions to ' + b.getAttribute('data-directions'));
+    });
+  });
+  scroll.querySelectorAll('[data-open-detail]').forEach(bindDetailTap);
+  document.getElementById('detail-page').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-page').classList.remove('open');
+}
+
+function bindDetailTap(el) {
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', function(e) {
+    if (e.target.closest('[data-action]')) return;
+    var val = el.getAttribute('data-open-detail');
+    var colon = val.indexOf(':');
+    openDetail(val.slice(0, colon), val.slice(colon + 1));
+  });
+}
+
+function bindDetailTaps(container) {
+  container.querySelectorAll('[data-open-detail]').forEach(bindDetailTap);
+}
+
+/* === CARD ACTIONS =========================================================== */
+function bindCardAction(b) {
+  b.addEventListener('click', function() {
+    var a = b.getAttribute('data-action') || '';
+    if (a.indexOf('follow:') === 0) {
+      var nm = a.slice(7);
+      resolveModal(resp('chat','Following.', {text:"You are now following "+nm+". You'll get updates when they post or speak.", chips:["See their session","Send a note","Find similar speakers"]}));
+    } else if (a.indexOf('add:') === 0) {
+      b.className = 'bzc-btn bzc-btn-soft';
+      b.innerHTML = I.check + ' Saved';
+      b.setAttribute('data-action', 'remove:' + a.slice(4));
+    } else if (a.indexOf('remove:') === 0) {
+      b.className = 'bzc-btn bzc-btn-primary';
+      b.innerHTML = I.plus + ' Add';
+      b.setAttribute('data-action', 'add:' + a.slice(7));
+    } else if (a.indexOf('meet:') === 0) {
+      var n = a.slice(5);
+      openModal('Message ' + n);
+      setTimeout(function(){ resolveModal(getResponse('message '+n)); }, 700);
+    } else if (a.indexOf('directions:') === 0) {
+      var pl = a.slice(11);
+      openModal('Directions to ' + pl);
+      setTimeout(function(){ resolveModal(getResponse('directions to '+pl)); }, 700);
+    } else if (a === 'copy-wifi') {
+      b.innerHTML = I.check + ' Copied';
+      b.style.color = '#19C37D';
+      setTimeout(function(){ b.innerHTML = I.copy + ' Copy'; b.style.color = ''; }, 2000);
+    } else if (a.indexOf('sponsor:') === 0) {
+      var sn = a.slice(8);
+      openModal('Tell me about ' + sn);
+      setTimeout(function(){ resolveModal(getResponse(sn+' booth')); }, 700);
+    }
+  });
+}
+
+/* === CLAUDE API ============================================================= */
+var BIZZY_SYS = 'You are Bizzy, in-app event assistant for Bizzabo. Warm, concise, specific.\n'
+  + 'EVENT: Web Summit, Expo Tel Aviv, May 12-15 2025. Lifecycle: live.\n'
+  + 'ATTENDEE: Julia, Product Designer, fintech. Interests: AI, product design, sustainability.\n'
+  + 'WiFi: SSID "EventGuest_5G", password "Summit2025!"\n'
+  + 'SESSIONS: 14:00 Building Sustainable Cities Auditorium A Maya Levine (LIVE); 14:30 AI in Product Design Hall B Daniel Wu (NEXT 23min); 16:00 Networking Mixer Level 1; 17:30 Closing Keynote Main Stage Sarah Chen\n'
+  + 'PEOPLE: Alex Chen Senior PM Stripe free 15:30; Priya Shah Design Lead Notion available now; Ravi Mendez Founder Threadwise; Dana Goldberg Sustainability Lead Patagonia in Hall B\n'
+  + 'SPONSORS: Figma Booth 12 Level 1; Stripe Booth 7 Level 1 hiring designers; Notion Booth 21 Level 1\n\n'
+  + 'RESPOND IN JSON ONLY (no markdown):\n'
+  + '{"kind":"cards","titleHtml":"title","cards":[...],"chips":["a","b","c"]}\n'
+  + '{"kind":"chat","titleHtml":"title","text":"2-4 sentences","chips":["a","b","c"]}\n'
+  + '{"kind":"nav","text":"framing","target":"agenda|network|speakers|more","chips":["a","b"]}\n'
+  + '{"kind":"propose","proposeLabel":"TYPE","proposeDetail":"detail","confirmLabel":"ok","confirmAction":"id","dismissLabel":"no","chips":["a","b"]}\n'
+  + '{"kind":"emergency","text":"numbers and locations","chips":["a","b"]}\n'
+  + 'Card types: session,speaker,person,wifi,place,sponsor,schedule. Always 2-4 chips under 28 chars.';
+
+function askClaude(query, callback) {
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: BIZZY_SYS,
+      messages: [{role:'user', content:'Query: '+query+'\nReturn JSON only.'}]
+    })
+  }).then(function(res){ return res.json(); })
+  .then(function(data) {
+    try {
+      var raw = data.content && data.content[0] && data.content[0].text;
+      if (!raw) { callback(null); return; }
+      var clean = raw.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/i,'').trim();
+      var m = clean.match(/\{[\s\S]*\}/);
+      if (!m) { callback(null); return; }
+      var parsed = JSON.parse(m[0]);
+      if (!parsed.kind) { callback(null); return; }
+      if (!Array.isArray(parsed.chips)) parsed.chips = [];
+      parsed.chips = parsed.chips.slice(0,4);
+      callback(parsed);
+    } catch(e) { callback(null); }
+  }).catch(function(){ callback(null); });
+}
+
+function ask(query) {
+  if (!query) return;
+  openModal(query);
+  var done = false;
+  var timer = setTimeout(function() {
+    if (!done) { done = true; resolveModal(getResponse(query)); }
+  }, 3500);
+  askClaude(query, function(r) {
+    clearTimeout(timer);
+    if (!done) { done = true; resolveModal(r || getResponse(query)); }
+  });
+}
+
+/* === SUGGESTIONS ============================================================ */
+function renderSuggestions() {
+  var chips = CHIPS[S.page] || CHIPS.home;
+  var el = document.getElementById('suggest-list');
+  el.innerHTML = chips.map(function(c) {
+    return '<button class="suggest-chip" data-prompt="'+esc(c)+'">'
+      + '<span class="s-icon">'+I.spark+'</span>' + esc(c)
+      + '</button>';
+  }).join('');
+  el.querySelectorAll('.suggest-chip').forEach(function(b) {
+    b.addEventListener('click', function(){ ask(b.getAttribute('data-prompt')); });
+  });
+}
+
+/* === HOME BODY ============================================================== */
+function renderHomeBody() {
+  var el = document.getElementById('home-body');
+  if (S.page !== 'home') { el.innerHTML = ''; return; }
+  var html = '<div class="home-section"><div class="home-section-title">Up next</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;">'
+    + cardSession(SESSIONS[1]) + cardSession(SESSIONS[0])
+    + '</div></div>'
+    + '<div class="home-section"><div class="home-section-title">People to meet</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;">'
+    + cardPerson(PEOPLE[0]) + cardPerson(PEOPLE[1])
+    + '</div></div>';
+  el.innerHTML = html;
+  el.querySelectorAll('[data-action]').forEach(bindCardAction);
+  bindDetailTaps(el);
+}
+
+/* === PAGE CONTENT =========================================================== */
+function renderPageContent() {
+  var isHome = S.page === 'home';
+  document.getElementById('anchor-wrap').style.display = isHome ? '' : 'none';
+  document.getElementById('event-banner').style.display = isHome ? '' : 'none';
+  document.getElementById('home-body').style.display = isHome ? '' : 'none';
+  var pg = document.getElementById('page-content');
+  if (isHome) { pg.innerHTML = ''; return; }
+  var html = '';
+  if (S.page === 'agenda') {
+    html = '<div class="page-section"><div class="page-section-title">Today, May 12</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+      + SESSIONS.map(function(s){ return cardSession(s); }).join('')
+      + '</div></div>';
+  } else if (S.page === 'network') {
+    html = '<div class="page-section"><div class="page-section-title">Suggested for you</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+      + PEOPLE.map(function(p){ return cardPerson(p); }).join('')
+      + '</div></div>';
+  } else if (S.page === 'speakers') {
+    html = '<div class="page-section"><div class="page-section-title">Speaking today</div>'
+      + '<div style="display:flex;flex-direction:column;gap:12px;">'
+      + SPEAKERS.map(function(s){ return cardSpeakerFull(s); }).join('')
+      + '</div></div>';
+  } else if (S.page === 'more') {
+    html = '<div class="page-section"><div class="page-section-title">Quick info</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+      + cardWifi()
+      + cardSponsor('Figma','Booth 12, Level 1','Live Dev Mode demos every 30 min','See booth')
+      + cardSponsor('Stripe','Booth 7, Level 1','Hiring designers - talk to Alex','See booth')
+      + cardSponsor('Notion','Booth 21, Level 1','Live workspace demos and swag','See booth')
+      + '</div></div>';
+  }
+  pg.innerHTML = html;
+  pg.querySelectorAll('[data-action]').forEach(bindCardAction);
+  bindDetailTaps(pg);
+}
+
+/* === TAB BAR ================================================================ */
+function renderTabBar() {
+  document.getElementById('tab-bar').innerHTML = TABS.map(function(t) {
+    return '<button class="tab '+(t.id===S.page?'on':'')+'" data-tab="'+t.id+'">'
+      + t.icon + '<span>'+t.label+'</span></button>';
+  }).join('');
+  document.querySelectorAll('.tab').forEach(function(b) {
+    b.addEventListener('click', function(){
+      S.page = b.getAttribute('data-tab');
+      renderTabBar();
+      renderSuggestions();
+      renderHomeBody();
+      renderPageContent();
+      document.getElementById('cs').scrollTop = 0;
+    });
+  });
+}
+
+/* === MODAL ================================================================== */
+function openModal(query) {
+  S.currentQuery = query;
+  document.getElementById('modal-q-text').textContent = query;
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('scrim').classList.add('open');
+  document.getElementById('modal-body').innerHTML = '<div class="typing"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+}
+
+function resolveModal(r) {
+  var mb = document.getElementById('modal-body');
+  mb.innerHTML = renderModalContent(r);
+  mb.querySelectorAll('.fu-chip[data-prompt]').forEach(function(b) {
+    b.addEventListener('click', function(){ ask(b.getAttribute('data-prompt')); });
+  });
+  mb.querySelectorAll('[data-nav]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      S.page = b.getAttribute('data-nav');
+      closeModal();
+      renderTabBar(); renderSuggestions(); renderHomeBody(); renderPageContent();
+    });
+  });
+  mb.querySelectorAll('[data-stay]').forEach(function(b) {
+    b.addEventListener('click', function(){ ask('Summarise in place'); });
+  });
+  mb.querySelectorAll('[data-action]').forEach(bindCardAction);
+  mb.querySelectorAll('[data-confirm]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      resolveModal(resp('chat','Done.', {text:"Request sent. You will get a notification when they respond.", chips:["What's on now?","Who else to meet?","Plan my afternoon"]}));
+    });
+  });
+  mb.querySelectorAll('[data-dismiss]').forEach(function(b) {
+    b.addEventListener('click', closeModal);
+  });
+  bindDetailTaps(mb);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('scrim').classList.remove('open');
+}
+
+/* === WIRE UP ================================================================ */
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('scrim').addEventListener('click', closeModal);
+document.getElementById('detail-back').addEventListener('click', closeDetail);
+
+var inp = document.getElementById('chat-input');
+document.getElementById('send-btn').addEventListener('click', function() {
+  var v = inp.value.trim(); if (!v) return; inp.value = ''; ask(v);
+});
+inp.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { var v = inp.value.trim(); if (!v) return; inp.value = ''; ask(v); }
+});
+document.getElementById('acard').addEventListener('click', function() {
+  ask(this.getAttribute('data-prompt') || "What's on right now?");
+});
+document.getElementById('a-cta').addEventListener('click', function(e) {
+  e.stopPropagation();
+  ask(document.getElementById('acard').getAttribute('data-prompt') || "What's on right now?");
+});
+document.getElementById('reset-btn').addEventListener('click', function() {
+  renderSuggestions(); renderHomeBody(); renderPageContent();
+});
+
+/* Banner avatar cluster */
+var bannerAvas = document.getElementById('banner-avatars');
+bannerAvas.innerHTML = [3,6,2].map(function(seed, i) {
+  return '<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.7);'
+    + (i > 0 ? 'margin-left:-10px;' : '') + 'box-shadow:0 2px 8px rgba(0,0,0,.2);">'
+    + avImg(seed, 34) + '</div>';
+}).join('');
+
+/* Init */
+renderTabBar();
+renderSuggestions();
+renderHomeBody();
+renderPageContent();
+
+})();
+</script>
+</body>
+</html>
