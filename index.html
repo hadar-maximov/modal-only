@@ -36,18 +36,23 @@
 
 /* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; -webkit-text-size-adjust: 100%; }
+html, body { height: 100%; -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--font);
   color: var(--t1);
   background: var(--sf2);
-  height: 100%;
-  /* Full screen app layout */
+  /* dvh = dynamic viewport height: shrinks when iOS browser chrome is visible */
+  height: 100vh;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Prevent pull-to-refresh bounce */
   overscroll-behavior: none;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
 }
 
 /* ── APP SHELL ── */
@@ -64,7 +69,8 @@ body {
 
 /* Scrollable content fills the middle */
 .app-body {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -74,15 +80,18 @@ body {
 }
 .app-body::-webkit-scrollbar { display: none; }
 
-/* Fixed footer — composer + tabs stay pinned at bottom */
+/* Footer — flex-shrink:0 keeps it pinned in the flex column */
 .app-footer {
   flex-shrink: 0;
   background: rgba(255,255,255,.97);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-top: 1px solid var(--bsoft);
-  /* Push content above home indicator on iOS */
-  padding-bottom: max(var(--sab), 0px);
+  padding-bottom: max(var(--sab), 8px);
+  /* belt-and-suspenders: also sticky at bottom */
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
 }
 
 /* ── APP BAR ── */
@@ -637,51 +646,42 @@ body {
 (function(){
 'use strict';
 
-/* === AVATAR SYSTEM ========================================================== */
-var _avc = {};
-function makeAv(seed) {
-  if (_avc[seed]) return _avc[seed];
-  var pal = [
-    ['#F8D5B0','#8B4513','#1A4D8F',0,'#E8F0F8'],
-    ['#F0C8A0','#5C2D0A','#D97706',1,'#FFF5E6'],
-    ['#DDA882','#2C1810','#0F7A52',0,'#E8F5EE'],
-    ['#C8956C','#1A1915','#7C3AED',1,'#F0EBFD'],
-    ['#E8B88C','#4A2810','#DC2626',0,'#FDE8E8'],
-    ['#F5D5B0','#6B3A1F','#374151',1,'#F0F0F0'],
-    ['#EAC595','#3D1F0E','#0891B2',0,'#E0F4F8'],
-    ['#D4A882','#1A1915','#166534',1,'#E8F5EE'],
-    ['#F2C9A0','#7A3B10','#5B3DF5',0,'#EEEAFE'],
-    ['#E0B090','#4A2010','#B91C1C',1,'#FDE8E8']
-  ];
-  var p = pal[seed % pal.length];
-  var sk=p[0],hr=p[1],sh=p[2],wavy=p[3],bg=p[4];
-  var hairTop = wavy
-    ? '<path d="M32 46 Q46 24 60 30 Q74 24 88 46 Q92 58 88 70 Q74 44 60 42 Q46 44 32 70 Q28 58 32 46Z" fill="'+hr+'"/>'
-    : '<ellipse cx="60" cy="36" rx="30" ry="26" fill="'+hr+'"/><rect x="30" y="42" width="60" height="12" fill="'+hr+'"/>';
-  var ears = '<ellipse cx="30" cy="62" rx="7" ry="9" fill="'+sk+'"/><ellipse cx="90" cy="62" rx="7" ry="9" fill="'+sk+'"/>';
-  var body = '<ellipse cx="60" cy="136" rx="55" ry="36" fill="'+sh+'"/>';
-  var neck = '<rect x="52" y="78" width="16" height="24" rx="6" fill="'+sk+'"/>';
-  var face = '<ellipse cx="60" cy="56" rx="26" ry="28" fill="'+sk+'"/>';
-  var eyes = '<ellipse cx="50" cy="54" rx="6" ry="5" fill="white"/><ellipse cx="70" cy="54" rx="6" ry="5" fill="white"/>'
-           + '<circle cx="50" cy="54" r="3.5" fill="#2D1A0E"/><circle cx="70" cy="54" r="3.5" fill="#2D1A0E"/>'
-           + '<circle cx="49" cy="52.5" r="1.4" fill="white" opacity=".9"/><circle cx="69" cy="52.5" r="1.4" fill="white" opacity=".9"/>';
-  var brows = '<path d="M45 47 Q50 44 55 46" stroke="'+hr+'" stroke-width="2" fill="none" stroke-linecap="round"/>'
-            + '<path d="M65 46 Q70 44 75 47" stroke="'+hr+'" stroke-width="2" fill="none" stroke-linecap="round"/>';
-  var nose = '<ellipse cx="60" cy="65" rx="4" ry="3" fill="rgba(0,0,0,.1)"/>';
-  var mouth = '<path d="M52 75 Q60 80 68 75" stroke="#A05060" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
-  var inner = '<rect width="120" height="120" fill="'+bg+'"/>'
-    + ears + body + hairTop + face + brows + eyes + nose + mouth + neck;
-  var svgStr = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">'
-    + '<defs><clipPath id="cp'+seed+'"><circle cx="60" cy="60" r="60"/></clipPath></defs>'
-    + '<g clip-path="url(#cp'+seed+')">' + inner + '</g></svg>';
-  _avc[seed] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
-  return _avc[seed];
+/* === AVATAR SYSTEM — initials =============================================== */
+var AV_COLORS = [
+  '#1A4D8F','#D97706','#0F7A52','#7C3AED','#DC2626',
+  '#374151','#0891B2','#166534','#5B3DF5','#B91C1C',
+  '#0369A1','#15803D','#86198F','#E05B00','#0B4FB8'
+];
+var AV_INITIALS = {
+  2:'AC', 3:'DW', 5:'DG', 6:'ML', 7:'JL', 8:'PS', 9:'SC', 11:'RM'
+};
+function avInitials(seed) {
+  if (AV_INITIALS[seed]) return AV_INITIALS[seed];
+  var alpha = 'ABCDEFGHJKLMNPRSTW';
+  return alpha[seed % alpha.length] + alpha[(seed * 3 + 7) % alpha.length];
 }
-function avImg(seed, sz) {
+function avImg(seed, sz, name) {
   var s = sz || 44;
-  return '<img src="'+makeAv(seed)+'" alt="" width="'+s+'" height="'+s+'" style="width:'+s+'px;height:'+s+'px;border-radius:50%;display:block;">';
+  var bg = AV_COLORS[seed % AV_COLORS.length];
+  var initials;
+  if (name) {
+    var parts = name.trim().split(' ');
+    initials = parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : parts[0].slice(0, 2).toUpperCase();
+  } else {
+    initials = avInitials(seed);
+  }
+  var fs = Math.round(s * 0.36);
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"'
+    + ' style="border-radius:50%;display:block;flex-shrink:0;">'
+    + '<circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+(s/2)+'" fill="'+bg+'"/>'
+    + '<text x="50%" y="50%" dominant-baseline="central" text-anchor="middle"'
+    + ' font-family="Manrope,system-ui,sans-serif" font-size="'+fs+'" font-weight="700" fill="#FFF"'
+    + ' letter-spacing="0.5">'+initials+'</text>'
+    + '</svg>';
 }
-document.getElementById('user-ava').innerHTML = avImg(7, 32);
+document.getElementById('user-ava').innerHTML = avImg(7, 32, 'Julia L');
 
 /* === ICONS ================================================================== */
 var I = {
@@ -771,7 +771,7 @@ function sep() { return ' \u00b7 '; }
 function cardPerson(c) {
   var muts = (c.mutuals || []).slice(0,3).map(function(m){ return '<span class="bzc-mut">'+esc(m)+'</span>'; }).join('');
   return '<article class="bzc" data-open-detail="person:'+esc(c.name)+'">'
-    +'<div class="bzc-ph">'+avImg(c.seed,44)+'</div>'
+    +'<div class="bzc-ph">'+avImg(c.seed,44,c.name)+'</div>'
     +'<div class="bzc-body">'
       +'<div class="bzc-name">'+esc(c.name)+'</div>'
       +'<div class="bzc-role">'+esc(c.role||'')+(c.company ? sep()+esc(c.company) : '')+'</div>'
@@ -787,7 +787,7 @@ function cardPerson(c) {
 function cardSpeaker(c) {
   var muts = (c.mutuals || []).slice(0,3).map(function(m){ return '<span class="bzc-mut">'+esc(m)+'</span>'; }).join('');
   return '<article class="bzc" data-open-detail="speaker:'+esc(c.name)+'">'
-    +'<div class="bzc-ph">'+avImg(c.seed,44)+'</div>'
+    +'<div class="bzc-ph">'+avImg(c.seed,44,c.name)+'</div>'
     +'<div class="bzc-body">'
       +'<div class="bzc-name">'+esc(c.name)+'</div>'
       +'<div class="bzc-role">'+esc(c.title||'')+(c.company ? sep()+esc(c.company) : '')+'</div>'
@@ -805,7 +805,7 @@ function cardSpeakerFull(c) {
   var grad = PERSON_GRADS[c.seed % PERSON_GRADS.length];
   return '<div class="spk-card" data-open-detail="speaker:'+esc(c.name)+'">'
     +'<div class="spk-card-img" style="background:'+grad+';">'
-      +'<div class="spk-card-av">'+avImg(c.seed,56)+'</div>'
+      +'<div class="spk-card-av">'+avImg(c.seed,56,c.name)+'</div>'
     +'</div>'
     +'<div class="spk-card-body">'
       +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
@@ -833,7 +833,7 @@ function cardSession(c) {
   var speakerBit = '';
   if (c.speakerSeed) {
     speakerBit = '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">'
-      +'<div style="width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;">'+avImg(c.speakerSeed,20)+'</div>'
+      +'<div style="width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;">'+avImg(c.speakerSeed,20,c.speaker)+'</div>'
       +'<span style="font-size:11px;color:var(--t3);">'+esc(c.speaker||'')+'</span>'
       +'</div>';
   } else if (c.speaker) {
@@ -896,7 +896,7 @@ function cardSchedule(items) {
     var tag = '';
     if (it.tag === 'live') tag = '<span class="bzc-tag bzc-tag-live"><span class="bzc-dot"></span>Live</span>';
     else if (it.tag === 'next') tag = '<span class="bzc-tag bzc-tag-next">Next</span>';
-    var av = it.speakerSeed ? '<div style="display:inline-flex;align-items:center;margin-left:6px;"><div style="width:16px;height:16px;border-radius:50%;overflow:hidden;display:inline-flex;">'+avImg(it.speakerSeed,16)+'</div></div>' : '';
+    var av = it.speakerSeed ? '<div style="display:inline-flex;align-items:center;margin-left:6px;"><div style="width:16px;height:16px;border-radius:50%;overflow:hidden;display:inline-flex;">'+avImg(it.speakerSeed,16,it.speaker)+'</div></div>' : '';
     return '<div class="bzc-sch-row">'
       +'<div class="bzc-sch-time">'+esc(it.time)+'</div>'
       +'<div><div class="bzc-sch-title">'+esc(it.title||'')+av+' '+tag+'</div><div class="bzc-sch-meta">'+esc(it.meta||'')+'</div></div>'
@@ -1089,7 +1089,7 @@ function openDetail(type, id) {
     title = p.name;
     html = '<div class="d-banner"><div class="d-banner-bg" style="background:'+grad+';"></div>'
       +'<div class="d-banner-pattern"></div><div class="d-banner-overlay"></div>'
-      +'<div class="d-banner-av">'+avImg(p.seed,72)+'</div></div>'
+      +'<div class="d-banner-av">'+avImg(p.seed,72,p.name)+'</div></div>'
       +'<div class="d-body">'
         +'<div class="d-name">'+esc(p.name)+'</div>'
         +'<div class="d-role">'+esc(p.role||'')+(p.company?sep()+esc(p.company):'')+'</div>'
@@ -1117,7 +1117,7 @@ function openDetail(type, id) {
     title = sp.name;
     html = '<div class="d-banner"><div class="d-banner-bg" style="background:'+grad+';"></div>'
       +'<div class="d-banner-pattern"></div><div class="d-banner-overlay"></div>'
-      +'<div class="d-banner-av">'+avImg(sp.seed,72)+'</div></div>'
+      +'<div class="d-banner-av">'+avImg(sp.seed,72,sp.name)+'</div></div>'
       +'<div class="d-body">'
         +'<div class="d-name">'+esc(sp.name)+'</div>'
         +'<div class="d-role">'+esc(sp.title||'')+(sp.company?sep()+esc(sp.company):'')+'</div>'
@@ -1148,7 +1148,7 @@ function openDetail(type, id) {
     if (spk) {
       speakerRow = '<div class="d-section"><div class="d-section-label">Speaker</div>'
         +'<div class="d-person-row" data-open-detail="speaker:'+esc(spk.name)+'">'
-          +'<div class="d-person-ph">'+avImg(spk.seed,40)+'</div>'
+          +'<div class="d-person-ph">'+avImg(spk.seed,40,spk.name)+'</div>'
           +'<div style="flex:1;min-width:0;">'
             +'<div class="d-person-name">'+esc(spk.name)+'</div>'
             +'<div class="d-person-role">'+esc(spk.title||'')+(spk.company?sep()+esc(spk.company):'')+'</div>'
@@ -1461,10 +1461,11 @@ document.getElementById('reset-btn').addEventListener('click', function() {
 
 /* Banner avatar cluster */
 var bannerAvas = document.getElementById('banner-avatars');
-bannerAvas.innerHTML = [3,6,2].map(function(seed, i) {
+var bannerData = [{seed:3,name:'Daniel Wu'},{seed:6,name:'Maya Levine'},{seed:2,name:'Alex Chen'}];
+bannerAvas.innerHTML = bannerData.map(function(d, i) {
   return '<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.7);'
     + (i > 0 ? 'margin-left:-10px;' : '') + 'box-shadow:0 2px 8px rgba(0,0,0,.2);">'
-    + avImg(seed, 34) + '</div>';
+    + avImg(d.seed, 34, d.name) + '</div>';
 }).join('');
 
 /* Init */
