@@ -205,47 +205,41 @@ body {
 }
 
 /* ── BIZZY DIVIDER ── */
-.bdiv { display: flex; align-items: center; gap: 10px; padding: 12px 16px 8px; flex-shrink: 0; }
-.bline { flex: 1; height: 1px; background: var(--border); }
-.bbadge {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 999px; padding: 5px 10px 5px 8px;
-  font-size: 11px; font-weight: 700; color: var(--t2);
+.bdiv {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 6px; flex-shrink: 0;
 }
-.bglyph {
-  width: 18px; height: 18px; border-radius: 50%; background: var(--accent);
-  display: flex; align-items: center; justify-content: center;
+.bdiv-line { flex: 1; height: 1px; background: var(--border); }
+.bdiv-label {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--t3);
+  display: flex; align-items: center; gap: 5px; flex-shrink: 0;
 }
-.ldot { width: 6px; height: 6px; border-radius: 50%; background: #19C37D; display: inline-block; animation: lp 1.6s infinite; }
-.rbtn {
-  width: 28px; height: 28px; border-radius: 50%; border: 0;
-  background: transparent; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--t3); transition: background .15s, color .15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.rbtn:active { background: var(--sf2); color: var(--t1); }
 
 /* ── SUGGEST CHIPS ── */
-.suggest-area { padding: 0 16px 8px; }
-.suggest-label {
-  font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px;
-  text-transform: uppercase; color: var(--t3); font-family: var(--font-mono);
-  margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+.suggest-area {
+  padding: 6px 0 10px;
+  flex-shrink: 0;
 }
-.suggest-list { display: flex; flex-direction: column; gap: 6px; }
+.suggest-list {
+  display: flex; flex-direction: row; gap: 7px;
+  overflow-x: auto; overflow-y: hidden;
+  padding: 2px 16px 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.suggest-list::-webkit-scrollbar { display: none; }
 .suggest-chip {
-  display: flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 999px; padding: 11px 16px;
-  font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--t1);
-  cursor: pointer; text-align: left; white-space: nowrap;
-  transition: border-color .15s, background .15s;
+  border-radius: 999px; padding: 8px 13px;
+  font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--t2);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: border-color .15s, background .15s, color .15s;
   -webkit-tap-highlight-color: transparent;
 }
 .suggest-chip:active { background: var(--accent-soft); border-color: var(--accent-mid); color: var(--accent); }
-.s-icon { color: var(--accent); display: inline-flex; flex-shrink: 0; }
+.s-icon { color: var(--accent); display: inline-flex; flex-shrink: 0; width: 10px; height: 10px; }
 
 /* ── HOME BODY SECTIONS ── */
 .home-section { padding: 0 16px 16px; }
@@ -390,18 +384,62 @@ body {
 .modal-close:active { background: var(--border); }
 .modal-body { overflow-y: auto; padding: 0 18px 4px; flex: 1; -webkit-overflow-scrolling: touch; }
 .modal-body::-webkit-scrollbar { display: none; }
+
+/* ── MODAL COMPOSER ── */
+.modal-composer {
+  flex-shrink: 0;
+  padding: 10px 14px 14px;
+  background: var(--surface);
+  border-top: 1px solid var(--bsoft);
+}
+.modal-crow {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--sf2); border-radius: 999px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--border);
+}
+.modal-crow input {
+  flex: 1; background: transparent; border: 0;
+  font-family: var(--font); font-size: 16px; color: var(--t1);
+  padding: 7px 0; outline: none;
+  min-width: 0;
+}
+.modal-crow input::placeholder { color: var(--t4); }
+.modal-sbtn {
+  width: 34px; height: 34px; border-radius: 50%; border: 0;
+  background: var(--t1); color: #FFF; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-sbtn:active { background: #000; }
+.modal-sbtn.ready { background: var(--accent); }
+.modal-sbtn.ready:active { background: #d40a55; }
 .morph { animation: morphIn .32s cubic-bezier(.2,.7,.2,1); }
 @keyframes morphIn { from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:none;} }
 .m-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.08; letter-spacing: -.6px; margin: 4px 0 8px; color: var(--t1); }
 .m-title em { font-style: italic; }
 .m-text { font-size: 14px; color: var(--t2); line-height: 1.55; margin-bottom: 14px; }
 .m-cards { margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
-.fu-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--t3); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-.fu-chips { display: flex; flex-direction: column; gap: 6px; padding-bottom: 18px; }
-.fu-chip { display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; font-size: 13px; font-weight: 600; color: var(--t1); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fu-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--t3); margin-bottom: 7px; display: flex; align-items: center; gap: 4px; padding: 0 2px; }
+.fu-chips {
+  display: flex; flex-direction: row; gap: 7px;
+  overflow-x: auto; overflow-y: hidden;
+  padding: 2px 2px 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.fu-chips::-webkit-scrollbar { display: none; }
+.fu-chip {
+  display: inline-flex; align-items: center;
+  background: var(--sf2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 8px 13px;
+  font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--t2);
+  white-space: nowrap; flex-shrink: 0; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .15s, background .15s, color .15s;
+}
 .fu-chip:active { border-color: var(--accent-mid); background: var(--accent-soft); color: var(--accent); }
-.fu-chip .fi { color: var(--accent); flex-shrink: 0; }
-.fu-chip .fa { margin-left: auto; color: var(--t4); }
 .yesno { display: flex; gap: 8px; padding-bottom: 16px; }
 .yesno button { flex: 1; padding: 14px 16px; border-radius: 14px; font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; border: 0; -webkit-tap-highlight-color: transparent; }
 .yesno .yes { background: var(--t1); color: #FFF; }
@@ -571,26 +609,15 @@ body {
 
   <!-- Bizzy divider -->
   <div class="bdiv">
-    <div class="bline"></div>
-    <div class="bbadge">
-      <div class="bglyph">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>
-      </div>
-      <span class="ldot"></span>
-      Bizzy
+    <div class="bdiv-label">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>
+      Ask Bizzy
     </div>
-    <div class="bline"></div>
-    <button class="rbtn" id="reset-btn" aria-label="Reset">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
-    </button>
+    <div class="bdiv-line"></div>
   </div>
 
   <!-- Suggest chips -->
   <div class="suggest-area" id="suggest-area">
-    <div class="suggest-label">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5Z"/></svg>
-      Ask Bizzy
-    </div>
     <div class="suggest-list" id="suggest-list"></div>
   </div>
 
@@ -640,6 +667,14 @@ body {
     </button>
   </div>
   <div class="modal-body" id="modal-body"></div>
+  <div class="modal-composer" id="modal-composer">
+    <div class="modal-crow">
+      <input type="text" id="modal-input" placeholder="Ask a follow-up…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button class="modal-sbtn" id="modal-send-btn" aria-label="Send">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1014,10 +1049,7 @@ function fuHtml(chips) {
   if (!chips || !chips.length) return '';
   var rows = chips.map(function(c) {
     return '<button class="fu-chip" data-prompt="'+esc(c)+'">'
-      +'<span class="fi">'+I.spark+'</span>'
-      +'<span>'+esc(c)+'</span>'
-      +'<span class="fa">'+I.arrow+'</span>'
-      +'</button>';
+      +esc(c)+'</button>';
   }).join('');
   return '<div class="fu-label">'+I.spark+' Follow up</div><div class="fu-chips">'+rows+'</div>';
 }
@@ -1312,9 +1344,7 @@ function renderSuggestions() {
   var chips = CHIPS[S.page] || CHIPS.home;
   var el = document.getElementById('suggest-list');
   el.innerHTML = chips.map(function(c) {
-    return '<button class="suggest-chip" data-prompt="'+esc(c)+'">'
-      + '<span class="s-icon">'+I.spark+'</span>' + esc(c)
-      + '</button>';
+    return '<button class="suggest-chip" data-prompt="'+esc(c)+'">'+esc(c)+'</button>';
   }).join('');
   el.querySelectorAll('.suggest-chip').forEach(function(b) {
     b.addEventListener('click', function(){ ask(b.getAttribute('data-prompt')); });
@@ -1401,6 +1431,11 @@ function openModal(query) {
   document.getElementById('modal').classList.add('open');
   document.getElementById('scrim').classList.add('open');
   document.getElementById('modal-body').innerHTML = '<div class="typing"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  /* Clear modal input field */
+  var mi = document.getElementById('modal-input');
+  if (mi) { mi.value = ''; mi.classList.remove('has-value'); }
+  var msb = document.getElementById('modal-send-btn');
+  if (msb) msb.classList.remove('ready');
 }
 
 function resolveModal(r) {
@@ -1438,6 +1473,36 @@ function closeModal() {
 
 /* === WIRE UP ================================================================ */
 document.getElementById('modal-close').addEventListener('click', closeModal);
+
+/* Modal composer */
+var mInp = document.getElementById('modal-input');
+var mSendBtn = document.getElementById('modal-send-btn');
+function sendModalInput() {
+  var v = mInp.value.trim();
+  if (!v) return;
+  mInp.value = '';
+  mSendBtn.classList.remove('ready');
+  /* Update the query chip in the header */
+  document.getElementById('modal-q-text').textContent = v;
+  /* Show typing state and re-query */
+  document.getElementById('modal-body').innerHTML = '<div class="typing"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  S.currentQuery = v;
+  var done = false;
+  var timer = setTimeout(function() {
+    if (!done) { done = true; resolveModal(getResponse(v)); }
+  }, 3500);
+  askClaude(v, function(r) {
+    clearTimeout(timer);
+    if (!done) { done = true; resolveModal(r || getResponse(v)); }
+  });
+}
+mInp.addEventListener('input', function() {
+  mSendBtn.classList.toggle('ready', mInp.value.trim().length > 0);
+});
+mInp.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { sendModalInput(); }
+});
+mSendBtn.addEventListener('click', sendModalInput);
 document.getElementById('scrim').addEventListener('click', closeModal);
 document.getElementById('detail-back').addEventListener('click', closeDetail);
 
@@ -1455,9 +1520,7 @@ document.getElementById('a-cta').addEventListener('click', function(e) {
   e.stopPropagation();
   ask(document.getElementById('acard').getAttribute('data-prompt') || "What's on right now?");
 });
-document.getElementById('reset-btn').addEventListener('click', function() {
-  renderSuggestions(); renderHomeBody(); renderPageContent();
-});
+/* reset button removed */
 
 /* Banner avatar cluster */
 var bannerAvas = document.getElementById('banner-avatars');
